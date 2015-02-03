@@ -4,7 +4,7 @@ var ari = require('ari-client');
 var util = require('util');
 var sla = require('./lib/sla.js');
 
-ari.connect('http://127.0.0.1:8088', 'ariUser', 'boogers', clientLoaded);
+ari.connect('http://127.0.0.1:8088', 'ariUser', 'yes', clientLoaded);
 
 function clientLoaded (err, client){
     console.log(sla());}

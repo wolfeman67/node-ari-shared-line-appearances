@@ -3,46 +3,28 @@
   "version": "1.0.0",
   "description": "SLA Application using node-ari-client.js",
   "author": "Chris Wolfe <cwolfe@digium.com>",
-  "contributors": [{
-  "name": "Tyler Cambron",
-  "email": "tcambron@digium.com"
-}],
-  //"bin": {
-  //"module-name": "./bin/module-name"
-//},
-  //"scripts": {
-  //  "test": "vows --spec --isolate",
-  //  "start": "node index.js",
-  //  "predeploy": "echo im about to deploy",
-  //  "postdeploy": "echo ive deployed",
-  //  "prepublish": "coffee --bare --compile --output lib/foo src/foo/*.coffee"
-  //},
+  "contributors": [
+    {
+      "name": "Tyler Cambron",
+      "email": "tcambron@digium.com"
+    }
+  ],
   "main": "app.js",
   "repository": {
-  "type": "git",
-  "url": "https://github.com/wolfeman67/node-ari-shared-line-appearances"
-},
-  "bugs": {
-  "url": "https://github.com/wolfeman67/node-ari-shared-line-appearances/issues"
-},
-  "keywords": [
-  "SLA",
-  "asterisk",
-  "ARI",
-  "node-ari-client"
-],
-  "dependencies": {
-    "asterisk": ">=12.0.0"
-    "node-ari-client": "https://github.com/asterisk/node-ari-client"
+    "type": "git",
+    "url": "https://github.com/wolfeman67/node-ari-shared-line-appearances"
   },
-  //"devDependencies": {
-  //  "vows": "^0.7.0",
-  //  "assume": "<1.0.0 || >=2.3.1 <2.4.5 || >=2.5.2 <3.0.0",
-  //  "pre-commit": "*"
-  //},
-  //"publishConfig": {
-  //"registry": "https://your-private-hosted-npm.registry.nodejitsu.com"
-//},
+  "bugs": {
+    "url": "https://github.com/wolfeman67/node-ari-shared-line-appearances/issues"
+  },
+  "keywords": [
+    "SLA",
+    "asterisk",
+    "ARI",
+    "node-ari-client"
+  ],
+  "dependencies": {
+    "ari-client": "^0.1.6"
+  },
   "license": "Apache-2"
 }
-  
