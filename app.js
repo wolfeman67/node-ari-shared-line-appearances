@@ -1,3 +1,4 @@
+/*jslint node: true */  
 'use strict';
 
 var ari = require('ari-client');
@@ -6,10 +7,17 @@ var sla = require('./lib/sla.js');
 
 ari.connect('http://127.0.0.1:8088', 'user', 'pass', clientLoaded);
 
-function clientLoaded (err, client){
-  client.start('hello');
+/**
+ * Starts Stasis app 'sla' and initiates SLA application after ARI connection.
+ * @param {Object} err - Error message.
+ * @param {Object} client - Object that contains information from the ARI 
+ *   connection.
+ */
+function clientLoaded (err, client) {
+  client.start('sla');
   var outgoing = client.Channel();
-  sla(client, outgoing, function(){
-    console.log('done');
+  sla(client, function() {
+    console.log('Application Completed');
+    process.exit(0);
   });
-}
+};
