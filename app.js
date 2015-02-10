@@ -14,14 +14,17 @@ ari.connect('http://127.0.0.1:8088', 'user', 'pass', clientLoaded);
  *   connection.
  */
 function clientLoaded (err, client) {
-  client.start('sla');
-  sla(client, function(err) {
-    if (err != null) {
-      console.error(err);
-      process.exit(1);
-    } else {
-      console.log('Application Completed');
-      process.exit(0);
-    }
-  });
-};
+  if (err) {
+    throw err;
+  } else {
+    client.start('sla');
+    sla(client, function(err) {
+      if (err !== null) {
+        throw err;
+      } else {
+        console.log('Application Completed');
+        process.exit(0);
+      }
+    });
+  }
+}
