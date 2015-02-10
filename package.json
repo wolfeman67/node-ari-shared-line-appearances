@@ -1,7 +1,7 @@
 {
   "name": "SLA_app",
   "version": "0.0.1",
-  "description": "SLA Application using node-ari-client.js",
+  "description": "SLA Application using ari-client",
   "author": "Chris Wolfe <cwolfe@digium.com>",
   "contributors": [
     {
