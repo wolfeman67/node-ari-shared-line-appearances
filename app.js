@@ -9,10 +9,9 @@ var Q = require('q');
 var connect = Q.denodeify(ari.connect);
 
 connect('http://127.0.0.1:8088', 'user', 'pass')
-  .then(function (client) {
-    clientLoaded(client);
-  })
-  .catch(errHandler);
+  .then(clientLoaded)
+  .catch(errHandler)
+  .done();
 
 /**
  * Starts Stasis app 'sla' and initiates SLA application after ARI connection.
@@ -24,9 +23,7 @@ function clientLoaded (client) {
   sla(client)
     .then(console.log)
     .catch(errHandler)
-    .finally(function () {
-      process.exit(0);
-    });
+    .done();
 }
 
 /**
