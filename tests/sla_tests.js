@@ -2,32 +2,38 @@
  * SLA bridge and channel creation tests.
  *
  */
-"use strict";
-
 /*global describe:false*/
 /*global afterEach:false*/
 
 var util = require('util');
 var Emitter = require('events').EventEmitter;
+var Q = require('q');
 
+// What simulates the mock ARI client
 var mockClient;
-var mockChannel;
-var mockBridge;
+// The bridge id that gets incremented every time a bridge is created
+var bridgeId = 0;
+// The channel id that gets incremented every time a channel is created
+var channelId = 0;
 // The channels in existance
 var channels = [];
 // The bridges in existance (should only be one)
 var bridges = [];
 // The channels in the bridges
 var bridge_channels = [];
-// Tests if a bridge has been created or not on a particular test. Resets
-var bridge_created = 0;
-// Mock value for whether the endpoint is valid or not
-var valid = 1;
 // Conditional for whether or not StasisStart has been passed yet
 var pastStasis = 0;
+// Conditional for whether or not the created bridge is specified as mixing
+var isMixing = 0;
+// Mocks a valid endpoint for originating
+var validEndpoint = "SIP/phone";
+// Conditional for whether or not we are using an existing bridge
+var usingExisting = 0;
 
 // The mocked up version of the callback error function
-var end= function(err){console.log(err);}
+var errHandler = function(err) {
+  throw new Error(err);
+};
 
 // Millesecond delay for mock requests
 var asyncDelay = 100;
@@ -44,21 +50,20 @@ var getMockClient = function() {
   var Client = function() {
     this.bridges = {
       list: function(cb) {
-        console.log(bridges);
         cb(null, bridges);
+        if(bridges.length !== 0) {
+          usingExisting = 1;
+        }
         return bridges;
       },
       create: function(param, cb) {
-        bridge_created = 1;
-        console.log(param);
         bridges.push(getMockBridge(param));
-        console.log(bridges)
-        cb(null, bridges[0]);
+        cb(null, bridges[bridges.length-1]);
       }
     };
     this.Channel= function() {
       return getMockChannel();
-      }
+    };
   };
   mockClient = new Client();
   return mockClient;
@@ -71,23 +76,25 @@ var getMockClient = function() {
 
 var getMockBridge = function(param) {
   var Bridge = function(param) {
-    console.log(param.type);
     this.bridge_type = param.type;
-    this.id = "1";
+    if (this.bridge_type == "mixing") {
+      isMixing = 1;
+    }
+    this.id = bridgeId.toString();
+    bridgeId += 1;
     this.addChannel= function(input, cb) {
-      console.log("TREX");
-      pastStasis = 1;
+      //Here channels and bridges should have the same ID number
       var channel = channels.filter(function(testChan) {
-        return testChan.id === '1';
+        return testChan.id === input.id;
       })[0];
       bridge_channels.push(channel);
       cb(null);
-      console.log(channel);
-      this.emit('ChannelEnteredBridge', {channel: {id: channel.id}});
+      this.emit('ChannelEnteredBridge', {bridge: {id: this.id},
+        channel: {id: channel.id}}, {bridge: this, channel: channel});
     };
   };
   util.inherits(Bridge, Emitter);
-  mockBridge = new Bridge(param);
+  var mockBridge = new Bridge(param);
   return mockBridge;
 };
 
@@ -98,20 +105,20 @@ var getMockBridge = function(param) {
 
 var getMockChannel = function() {
   var Channel = function() {
-    this.id = '1';
+    this.id = channelId.toString();
+    channelId += 1;
     this.originate = function(input, cb) {
-      console.log(input);
       var self = this;
       setTimeout(function() {
-        if(valid == 1) {
-          console.log(self);
-          self.emit('StasisStart', self, self);
+        if(validEndpoint == input.endpoint) {
+          self.emit('StasisStart', {channel: {id: self.id}}, {channel: self});
+          pastStasis = 1;
         }
-      }, 20);
+      }, asyncDelay);
     };
   };
   util.inherits(Channel, Emitter);
-  mockChannel = new Channel();
+  var mockChannel = new Channel();
   channels.push(mockChannel);
   return mockChannel;
 };
@@ -119,21 +126,24 @@ var getMockChannel = function() {
 describe('SLA Bridge and Channel Tester', function() {
 
   afterEach(function(done) {
+    bridges = [];
+    usingExisting = 0;
+    validEndpoint = "SIP/phone";
+    pastStasis = 0;
     channels = [];
     bridge_channels = [];
-    bridge_created = 0;
+    isMixing = 0;
     done();
-    });
+  });
 
   it('should create a bridge when there isn\'t one', function(done) {
-    var channel = getMockChannel();
     var client = getMockClient();
-    var sla = require('../lib/sla.js')(client, end);
+    var sla = require('../lib/sla.js')(client).done();
 
     bridgeChecking();
     function bridgeChecking() {
       setTimeout(function() {
-        if(channels.length != 0 && bridge_created == 1) {
+        if(channels.length !== 0 && usingExisting === 0 && isMixing == 1) {
           done();
         } else {
           bridgeChecking();
@@ -143,14 +153,14 @@ describe('SLA Bridge and Channel Tester', function() {
   });
 
   it('should use a preexisting bridge if there is one', function(done) {
-    var channel = getMockChannel();
     var client = getMockClient();
-    var sla = require('../lib/sla.js')(client, end);
+    var sla = require('../lib/sla.js')(client).done();
 
+    bridges.push(getMockBridge({type: 'mixing'}, function(){}));
     bridgeChecking();
     function bridgeChecking() {
       setTimeout(function() {
-        if(channels.length != 0 && bridge_created == 0) {
+        if(channels.length !== 0 && usingExisting == 1 && isMixing == 1) {
           done();
         } else {
           bridgeChecking();
@@ -161,15 +171,13 @@ describe('SLA Bridge and Channel Tester', function() {
 
   it('should use a "valid" endpoint and give off a StasisStart event ' +
      'to proceed to the next section', function(done) {
-    var channel = getMockChannel();
     var client = getMockClient();
-    var sla = require('../lib/sla.js')(client, end);
+    var sla = require('../lib/sla.js')(client).done();
 
     validChecking();
     function validChecking() {
       setTimeout(function() {
-        if(pastStasis == 1 && bridge_channels.length != 0) {
-          pastStasis = 0;
+        if(pastStasis == 1 && bridge_channels.length !== 0 && isMixing == 1) {
           done();
         } else {
           validChecking();
@@ -180,15 +188,14 @@ describe('SLA Bridge and Channel Tester', function() {
 
   it('should use an "invalid" endpoint and not give off a StasisStart event',
      function(done) {
-    valid = 0;
-    var channel = getMockChannel();
+    validEndpoint = "SIP/notphone";
     var client = getMockClient();
-    var sla = require('../lib/sla.js')(client, end);
+    var sla = require('../lib/sla.js')(client).done();
 
     invalidChecking();
     function invalidChecking() {
       setTimeout(function() {
-        if(pastStasis == 0 && bridge_channels.length == 0) {
+        if(pastStasis === 0 && bridge_channels.length === 0 && isMixing == 1) {
           done();
         } else {
           invalidChecking();
