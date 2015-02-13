@@ -87,7 +87,7 @@ var getMockBridge = function(param) {
     this.addChannel= function(input, cb) {
       //Here channels and bridges should have the same ID number
       var channel = channels.filter(function(testChan) {
-        return testChan.id === input.id;
+        return testChan.id === input.channel;
       })[0];
       bridgeChannels.push(channel);
       cb(null);
@@ -145,8 +145,7 @@ describe('SLA Bridge and Channel Tester', function() {
     bridgeChecking();
     function bridgeChecking() {
       setTimeout(function() {
-        if(channels.length !== 0 && usingExisting === false &&
-          isMixing === true) {
+        if(channels.length !== 0 && !usingExisting && isMixing) {
           done();
         } else {
           bridgeChecking();
@@ -163,8 +162,7 @@ describe('SLA Bridge and Channel Tester', function() {
     bridgeChecking();
     function bridgeChecking() {
       setTimeout(function() {
-        if(channels.length !== 0 && usingExisting === true &&
-          isMixing === true) {
+        if(channels.length !== 0 && usingExisting && isMixing) {
           done();
         } else {
           bridgeChecking();
@@ -181,7 +179,7 @@ describe('SLA Bridge and Channel Tester', function() {
     validChecking();
     function validChecking() {
       setTimeout(function() {
-        if(pastStasis === true && bridgeChannels.length !== 0 &&
+        if(pastStasis && bridgeChannels.length !== 0 &&
           isMixing === true) {
           done();
         } else {
@@ -200,8 +198,7 @@ describe('SLA Bridge and Channel Tester', function() {
     invalidChecking();
     function invalidChecking() {
       setTimeout(function() {
-        if(pastStasis === false && bridgeChannels.length === 0 &&
-          isMixing === true) {
+        if(!pastStasis && bridgeChannels.length === 0 && isMixing) {
           done();
         } else {
           invalidChecking();
