@@ -20,10 +20,20 @@ connect('http://127.0.0.1:8088', 'user', 'pass')
  */
 function clientLoaded (client) {
   client.start('sla');
-  sla(client)
-    .then(console.log)
-    .catch(errHandler)
-    .done();
+  var defer = Q.defer();
+  client.on('StasisStart', function(event, channel) {
+    stasisStart(event, client, channel);
+  });
+}
+
+function stasisStart (event, client, channel) {
+  if(event.args[0] !== 'dialed') {
+    var bridgeNumber = event.args[0];
+    sla(client, channel, bridgeNumber)
+      .then(console.log)
+      .catch(errHandler)
+      .done();
+  }
 }
 
 /**
@@ -31,6 +41,5 @@ function clientLoaded (client) {
  * @param {Object} err - error from application.
  */
 function errHandler(err) {
-  console.error(err);
   throw err;
 }

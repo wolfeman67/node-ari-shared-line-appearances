@@ -23,8 +23,9 @@ var channels = [];
 var bridges = [];
 // The channels in the bridges
 var bridgeChannels = [];
-// Conditional for whether or not StasisStart has been passed yet
-var pastStasis = false;
+// Conditional for whether or not the originate function has been passed yet
+// Note: this only applies to the dialed channels, not inbound
+var pastOriginate = false;
 // Conditional for whether or not the created bridge is specified as mixing
 var isMixing = false;
 // Mocks a valid endpoint for originating
@@ -67,6 +68,7 @@ var getMockClient = function() {
       return getMockChannel();
     };
   };
+  util.inherits(Client, Emitter);
   mockClient = new Client();
   return mockClient;
 };
@@ -79,13 +81,13 @@ var getMockClient = function() {
 var getMockBridge = function(param) {
   var Bridge = function(param) {
     this['bridge_type'] = param.type;
+    this.name = param.name;
     if (this['bridge_type'] === 'mixing') {
       isMixing = true;
     }
     this.id = bridgeId.toString();
     bridgeId += 1;
     this.addChannel= function(input, cb) {
-      //Here channels and bridges should have the same ID number
       var channel = channels.filter(function(testChan) {
         return testChan.id === input.channel;
       })[0];
@@ -103,6 +105,7 @@ var getMockBridge = function(param) {
 /**
  * Returns a mock channel that has an id, and can use originate to add a channel
  * to the array of total channels. Emits a StasisStart event when originating.
+ * Emits ChannelHangupRequest and ChannelDestroyed events when hanging up.
  */
 
 var getMockChannel = function() {
@@ -113,10 +116,26 @@ var getMockChannel = function() {
       var self = this;
       setTimeout(function() {
         if(validEndpoint === input.endpoint) {
-          self.emit('StasisStart', {channel: {id: self.id}}, {channel: self});
-          pastStasis = true;
+          self.emit('StasisStart', {channel: {id: self.id}}, self);
+          pastOriginate = true;
         }
       }, asyncDelay);
+    };
+    this.hangup = function(cb) {
+      var self = this;
+      for (var i = 0; i < channels.length; i++) {
+        if(channels[i] === self) {
+          channels.splice(i,1);
+        }
+      }
+        setTimeout(function() {
+          self.emit('ChannelHangupRequest', {channel: {id: self.id}},
+            {channel: self});
+          self.emit('ChannelDestroyed', {channel: {id: self.id}},
+            {channel: self});
+        }, (asyncDelay/10));
+    };
+    this.answer = function(cb) {
     };
   };
   util.inherits(Channel, Emitter);
@@ -125,13 +144,13 @@ var getMockChannel = function() {
   return mockChannel;
 };
 
-describe('SLA Bridge and Channel Tester', function() {
+describe('SLA Bridge and Channels Tester', function() {
 
   afterEach(function(done) {
     bridges = [];
     usingExisting = false;
     validEndpoint = 'SIP/phone';
-    pastStasis = false;
+    pastOriginate = false;
     channels = [];
     bridgeChannels = [];
     isMixing = false;
@@ -140,7 +159,8 @@ describe('SLA Bridge and Channel Tester', function() {
 
   it('should create a bridge when there isn\'t one', function(done) {
     var client = getMockClient();
-    var sla = require('../lib/sla.js')(client).done();
+    var inbound = getMockChannel();
+    var sla = require('../lib/sla.js')(client, inbound, '999').done();
 
     bridgeChecking();
     function bridgeChecking() {
@@ -156,9 +176,10 @@ describe('SLA Bridge and Channel Tester', function() {
 
   it('should use a preexisting bridge if there is one', function(done) {
     var client = getMockClient();
-    var sla = require('../lib/sla.js')(client).done();
+    var inbound = getMockChannel();
+    var sla = require('../lib/sla.js')(client, inbound, '999').done();
 
-    bridges.push(getMockBridge({type: 'mixing'}, function(){}));
+    bridges.push(getMockBridge({type: 'mixing', name: '999'}, function(){}));
     bridgeChecking();
     function bridgeChecking() {
       setTimeout(function() {
@@ -174,13 +195,13 @@ describe('SLA Bridge and Channel Tester', function() {
   it('should use a "valid" endpoint and give off a StasisStart event ' +
      'to proceed to the next section', function(done) {
     var client = getMockClient();
-    var sla = require('../lib/sla.js')(client).done();
+    var inbound = getMockChannel();
+    var sla = require('../lib/sla.js')(client, inbound, '999').done();
 
     validChecking();
     function validChecking() {
       setTimeout(function() {
-        if(pastStasis && bridgeChannels.length !== 0 &&
-          isMixing === true) {
+        if(pastOriginate && bridgeChannels.length !== 0 && isMixing) {
           done();
         } else {
           validChecking();
@@ -189,19 +210,58 @@ describe('SLA Bridge and Channel Tester', function() {
     } 
   });
 
-  it('should use an "invalid" endpoint and not give off a StasisStart event',
+  it('should dial an "invalid" endpoint and not give off a StasisStart event',
      function(done) {
     validEndpoint = 'SIP/notphone';
     var client = getMockClient();
-    var sla = require('../lib/sla.js')(client).done();
+    var inbound = getMockChannel();
+    var sla = require('../lib/sla.js')(client, inbound, '999').done();
 
     invalidChecking();
     function invalidChecking() {
       setTimeout(function() {
-        if(!pastStasis && bridgeChannels.length === 0 && isMixing) {
+        if(!pastOriginate && bridgeChannels.length === 0 && isMixing) {
           done();
         } else {
           invalidChecking();
+        }
+      }, asyncDelay);
+    } 
+  });
+  it('should enter the application but specify an invalid SLA bridge',
+     function(done) {
+    var client = getMockClient();
+    var inbound = getMockChannel();
+    var sla = require('../lib/sla.js')(client, inbound, 'invalid').done();
+
+    incorrectBridge();
+    function incorrectBridge() {
+      setTimeout(function() {
+        if(!pastOriginate && bridgeChannels.length === 0 &&
+          bridges.length === 0) {
+          done();
+        } else {
+          incorrectBridge();
+        }
+      }, asyncDelay);
+    } 
+  });
+  it('should enter the application, call the dialed channel, but hang up ' + 
+      'before it answers (which in turn hangs up inbound caller)',
+     function(done) {
+    var client = getMockClient();
+    var inbound = getMockChannel();
+    var sla = require('../lib/sla.js')(client, inbound, '999').done();
+    channels[0].hangup();
+
+    earlyHangup();
+    function earlyHangup() {
+      setTimeout(function() {
+        if(!pastOriginate && bridgeChannels.length === 0 && isMixing &&
+          channels.length === 0 && bridges.length === 1) {
+          done();
+        } else {
+          earlyHangup();
         }
       }, asyncDelay);
     } 
