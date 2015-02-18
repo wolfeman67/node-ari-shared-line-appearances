@@ -1,4 +1,3 @@
-/*jslint node: true */  
 'use strict';
 
 var ari = require('ari-client');
@@ -14,26 +13,21 @@ connect('http://127.0.0.1:8088', 'user', 'pass')
   .done();
 
 /**
- * Starts Stasis app 'sla' and initiates SLA application after ARI connection.
+ * Waits for a StasisStart event before going into the main SLA module
  * @param {Object} client - Object that contains information from the ARI 
  *   connection.
  */
 function clientLoaded (client) {
   client.start('sla');
-  var defer = Q.defer();
   client.on('StasisStart', function(event, channel) {
-    stasisStart(event, client, channel);
+    if(event.args[0] !== 'dialed') {
+      var bridgeName = event.args[0];
+      sla(client, channel, bridgeName)
+        .then(console.log)
+        .catch(errHandler)
+        .done();
+    }
   });
-}
-
-function stasisStart (event, client, channel) {
-  if(event.args[0] !== 'dialed') {
-    var bridgeNumber = event.args[0];
-    sla(client, channel, bridgeNumber)
-      .then(console.log)
-      .catch(errHandler)
-      .done();
-  }
 }
 
 /**
