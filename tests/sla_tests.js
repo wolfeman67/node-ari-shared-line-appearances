@@ -19,31 +19,23 @@ var bridgeId = 0;
 var channelId = 0;
 // The channels in existance
 var channels = [];
+// Contains a list of all channels that have been dialed
+// Note: They can be hung up afterwards, this isn't a current list like channels
+var dialed = [];
 // The bridges in existance (should only be one)
 var bridges = [];
 // The channels in the bridges
 var bridgeChannels = [];
-// Conditional for whether or not the originate function has been passed yet
-// Note: this only applies to the dialed channels, not inbound
-var pastOriginate = false;
 // Conditional for whether or not the created bridge is specified as mixing
 var isMixing = false;
 // Mocks a valid endpoint for originating
 var validEndpoint = 'SIP/phone';
 // Conditional for whether or not we are using an existing bridge
 var usingExisting = false;
-// The id for the inbound channel, to be differentiable from dialed channel/s
-var inboundId;
-// How may answers have occurred - how many hangups have occurred
-var answeredMinusHungUp = 0;
-// If the inbound channel has been answered
-var inboundAnswered = false;
-// If the dialed channel/s have been answered
-var dialedAnswered = false;
 
 // The mocked up version of the callback error function
 var errHandler = function(err) {
-  throw new Error(err);
+  console.error(err);
 };
 
 // Millesecond delay for mock requests
@@ -75,7 +67,8 @@ var getMockClient = function() {
       }
     };
     this.Channel= function() {
-      return getMockChannel();
+      var newChan = getMockChannel();
+      return newChan;
     };
   };
   util.inherits(Client, Emitter);
@@ -109,8 +102,8 @@ var getMockBridge = function(param) {
       if(bridgeChannels) {
         var self = this;
         bridgeChannels.forEach(function(bridgeChan) {
-          self.emit('ChannelEnteredBridge', {bridge: self.id,
-            channel: bridgeChan.id}, {bridge: self, channel: bridgeChan});
+          self.emit('ChannelEnteredBridge', {bridge: self,
+            channel: bridgeChan}, {bridge: self, channel: bridgeChan});
         });
       }
       cb(null);
@@ -132,38 +125,35 @@ var getMockChannel = function() {
     this.id = channelId.toString();
     channelId += 1;
     this.originate = function(input, cb) {
-      pastOriginate = true;
+      this['dialed'] = 'yes';
+      dialed.push(this);
       var self = this;
       setTimeout(function() {
         if(validEndpoint === input.endpoint) {
-          self.emit('StasisStart', {channel: {id: self.id}}, self);
+          self.emit('StasisStart', {channel: self}, self);
+          cb(null);
+        }
+        else {
+          cb(new Error(self.id + ' is an invalid channel'));
         }
       }, answeringDelay);
     };
-    this.hangup = function() {
+    this.hangup = function(cb) {
       var self = this;
+      this['hungup'] = 'yes';
+      cb(null);
       setTimeout(function() {
         if(channels.length) {
-          answeredMinusHungUp -= 1;
           channels = channels.filter(function(channel) {
             return channel !== self;
           });
-          self.emit('ChannelHangupRequest', {channel: {id: self.id}},
-            {channel: self});
-          self.emit('ChannelDestroyed', {channel: {id: self.id}},
-            {channel: self});
+          self.emit('ChannelHangupRequest', {channel: self}, self);
+          self.emit('ChannelDestroyed', {channel: self}, self);
         }
       }, (asyncDelay/2));
     };
     this.answer = function(cb) {
-      if(this.id === inboundId && channels.indexOf(this) > -1) {
-        inboundAnswered = true;
-        answeredMinusHungUp += 1;
-      }
-      else if(channels.indexOf(this) > -1) {
-        dialedAnswered = true;
-        answeredMinusHungUp += 1;
-      }
+      this['answered'] = 'yes';
       cb(null);
     };
   };
@@ -176,17 +166,14 @@ var getMockChannel = function() {
 describe('SLA Bridge and Channels Tester', function() {
 
   afterEach(function(done) {
-    answeredMinusHungUp = 0;
     bridges = [];
     usingExisting = false;
     validEndpoint = 'SIP/phone';
-    pastOriginate = false;
     channels = [];
     bridgeChannels = [];
     isMixing = false;
-    inboundAnswered = false;
-    dialedAnswered = false;
     answeringDelay = asyncDelay;
+    dialed = [];
     done();
   });
 
@@ -229,14 +216,13 @@ describe('SLA Bridge and Channels Tester', function() {
      'to proceed to the next section', function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
-    inboundId = inbound.id;
     var sla = require('../lib/sla.js')(client, inbound, '999').done();
 
     validChecking();
     function validChecking() {
       setTimeout(function() {
-        if(pastOriginate && dialedAnswered && bridgeChannels.length !== 0 &&
-          isMixing) {
+        if(dialed[0] && dialed[0]['answered'] && bridgeChannels.length !== 0 &&
+          isMixing && inbound['answered']) {
           done();
         } else {
           validChecking();
@@ -250,14 +236,15 @@ describe('SLA Bridge and Channels Tester', function() {
     validEndpoint = 'SIP/notphone';
     var client = getMockClient();
     var inbound = getMockChannel();
-    inboundId = inbound.id;
-    var sla = require('../lib/sla.js')(client, inbound, '999').done();
+    var sla = require('../lib/sla.js')(client, inbound, '999')
+      .catch(errHandler)
+      .done();
 
     invalidChecking();
     function invalidChecking() {
       setTimeout(function() {
-        if(pastOriginate && !dialedAnswered && bridgeChannels.length === 0 &&
-          isMixing) {
+        if(dialed[0] && !dialed[0]['answered'] && bridgeChannels.length === 0 &&
+          isMixing && inbound['answered']) {
           done();
         } else {
           invalidChecking();
@@ -270,13 +257,16 @@ describe('SLA Bridge and Channels Tester', function() {
      function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
-    var sla = require('../lib/sla.js')(client, inbound, 'invalid').done();
+    inbound['inbound'] = 'yes';
+    var sla = require('../lib/sla.js')(client, inbound, 'invalid')
+      .catch(errHandler)
+      .done();
 
     incorrectBridge();
     function incorrectBridge() {
       setTimeout(function() {
-        if(!pastOriginate && bridges.length === 0 && !inboundAnswered &&
-          answeredMinusHungUp === -1) {
+        if(bridges.length === 0 && !dialed[0] && inbound['inbound'] &&
+          !inbound['answered'] && inbound['hungup'] && channels.length === 0) {
             done();
         } else {
           incorrectBridge();
@@ -289,17 +279,19 @@ describe('SLA Bridge and Channels Tester', function() {
      function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
-    var sla = require('../lib/sla.js')(client, inbound, '999').done();
-    answeringDelay = 2 * asyncDelay;
-    inboundId = inbound.id;
-    channels[0].hangup();
+    inbound['inbound'] = 'yes';
+    var sla = require('../lib/sla.js')(client, inbound, '999')
+      .catch(errHandler)
+      .done();
+    answeringDelay = 4 * asyncDelay;
+    inbound.hangup(function(){});
 
     earlyHangup();
     function earlyHangup() {
       setTimeout(function() {
-        if(pastOriginate && bridgeChannels.length === 0 && isMixing &&
-          channels.length === 0 && bridges.length === 1 && inboundAnswered  &&
-          !dialedAnswered && answeredMinusHungUp === -1) {
+        if(isMixing && channels.length === 0 && bridges.length === 1 &&
+          inbound['inbound'] && inbound['answered'] && inbound['hungup'] &&
+          dialed[0] && dialed[0]['hungup'] && !dialed[0]['answered']) {
           done();
         } else {
           earlyHangup();
