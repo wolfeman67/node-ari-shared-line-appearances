@@ -141,7 +141,7 @@ var getMockChannel = function() {
     this.id = channelId.toString();
     channelId += 1;
     this.originate = function(input, cb) {
-      this.dialed = true;
+      this['dialed'] = 'yes';
       dialed.push(this);
       if (this.id % 2 === 0) {
         answeringDelay = answeringDelay * 2;
@@ -164,7 +164,8 @@ var getMockChannel = function() {
     };
     this.hangup = function(cb) {
       var self = this;
-      this.wasHungup = true;
+      this['hungup'] = 'yes';
+      cb(null);
       setTimeout(function() {
         if (channels.length) {
           channels = channels.filter(function(channel) {
@@ -177,7 +178,7 @@ var getMockChannel = function() {
       }, (asyncDelay/2));
     };
     this.answer = function(cb) {
-      this.wasAnswered = true;
+      this['answered'] = 'yes';
       cb(null);
     };
   };
@@ -332,7 +333,7 @@ describe('SLA Bridge and Channels Tester', function() {
       }, asyncDelay);
     } 
   });
-  it('should hangup inbound channel if all dialed channles fail to answer',
+  it('should hangup inbound channel if all dialed channels fail to answer',
       function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
@@ -370,7 +371,6 @@ describe('SLA Bridge and Channels Tester', function() {
     var sla = require('../lib/sla.js')(client, config, inbound, '42')
       .catch(errHandler)
       .done();
-
     cancelDialing();
     function cancelDialing() {
       setTimeout(function() {
