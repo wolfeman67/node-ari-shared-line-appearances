@@ -16,6 +16,20 @@ if (confFile = process.argv[2]) {
   throw new Error('No configuration file specified');
 }
 
+/*
+* Checks to see if argument contains the dialed property or not.
+* @param {Object} argument - argument given by event that is checked to see
+*   if it is a bridge name or a channel.
+* @return {Boolean} - returns true or false.
+*/
+function isDialed(argument) {
+  if(argument === 'dialed') {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 /**
  * Checks if the argument tied to the StasisStart event is dialed (not inbound)
  * @param {String} argument - The argument (either an extension # or dialed)
@@ -60,5 +74,5 @@ function errHandler(err) {
    console.log(err.message);
   } else {
    throw err;
-  } 
+  }
 }
