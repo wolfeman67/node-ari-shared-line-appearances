@@ -1,0 +1,10 @@
+{
+  "trunks": [
+    {"name": "999",
+    "stations": [
+      {"endpoint": "SIP/phone"
+      }
+    ]
+    }
+  ]
+}
