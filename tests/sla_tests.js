@@ -3,6 +3,7 @@
  *
  */
 /*global describe:false*/
+/*global beforeEach:false*/
 /*global afterEach:false*/
 /*global it:false*/
 'use strict';
@@ -191,6 +192,7 @@ describe('SLA Bridge and Channels Tester', function() {
 
 
   afterEach(function(done) {
+    dal.deleteTrunk(config, '999');
     bridges = [];
     usingExisting = false;
     validEndpoints = ['SIP/phone1', 'SIP/phone2'];
@@ -370,9 +372,11 @@ describe('SLA Bridge and Channels Tester', function() {
     var sla = require('../lib/sla.js')(client, config, inbound, '42')
       .catch(errHandler)
       .done();
+    answeringDelay = 4 * asyncDelay;
+    inbound.hangup(function(){});
 
-    cancelDialing();
-    function cancelDialing() {
+    invalidConfigurationFile();
+    function invalidConfigurationFile() {
       setTimeout(function() {
         if (isMixing && channels.length === 2 && bridges.length === 1 &&
           inbound.inbound && inbound.wasAnswered && dialed[0] &&
@@ -385,7 +389,7 @@ describe('SLA Bridge and Channels Tester', function() {
             cancelDialing();
           }
       }, asyncDelay);
-    }
+    } 
   });
   it('should give the application an invalid configuration file and promptly ' +
       'fail out', function(done) {
