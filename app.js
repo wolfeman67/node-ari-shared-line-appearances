@@ -30,7 +30,8 @@ function clientLoaded (client) {
   client.on('StasisStart', function(event, channel) {
     if(!isDialed(event.args[0])) {
       var bridgeName = event.args[0];
-      sla(client, channel, bridgeName)
+      var confFile = './res/config.json';
+      sla(client, confFile, channel, bridgeName)
         .then(console.log)
         .catch(errHandler)
         .done();
@@ -43,7 +44,8 @@ function clientLoaded (client) {
  * @param {Object} err - error from application.
  */
 function errHandler(err) {
-  if(err.name === 'EarlyHangup' || err.name === 'HangupFailure') {
+  if(err.name === 'EarlyHangup' || err.name === 'HangupFailure' ||
+    err.name === 'NoStations') {
    console.log(err.message);
   } else {
    throw err;
