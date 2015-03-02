@@ -17,11 +17,7 @@ connect('http://127.0.0.1:8088', 'user', 'pass')
  * @param {String} argument - The argument (either an extension # or dialed)
  */
 function isDialed(argument) {
-  if(argument === 'dialed') {
-    return true;
-  } else {
-    return false;
-  }
+  return argument === 'dialed';
 }
 
 /**
