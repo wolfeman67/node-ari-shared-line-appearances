@@ -179,12 +179,14 @@ describe('SLA Bridge and Channels Tester', function() {
 
 
   beforeEach(function(done) {
-    dal.createTrunk(config, '999');
-    dal.addStation(config, 'SIP/phone1');
-    done();
+    dal.createTrunk(config, '999').then(function() {
+      dal.addStation(config, '999', 'SIP/phone1').then(function() {
+        done();
+      });
+    })
+    .catch(errHandler);
   });
   afterEach(function(done) {
-    dal.deleteTrunk(config, '999');
     bridges = [];
     usingExisting = false;
     validEndpoints = ['SIP/phone1', 'SIP/phone2'];
@@ -194,7 +196,10 @@ describe('SLA Bridge and Channels Tester', function() {
     answeringDelay = asyncDelay;
     dialed = [];
     config = './res/config.json';
-    done();
+    dal.deleteTrunk(config, '999').then(function() {
+      done();
+    })
+    .catch(errHandler);
   });
 
   // All of these tests also test the functionality of the

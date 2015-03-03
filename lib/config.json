@@ -1,0 +1,12 @@
+{
+  "SLABridges": [
+    {
+      "name": "999",
+      "stations": [
+        {
+          "endpoint": "SIP/100@tcambron"
+        }
+      ]
+    }
+  ]
+}
