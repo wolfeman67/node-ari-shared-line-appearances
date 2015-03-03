@@ -310,7 +310,6 @@ describe('SLA Bridge and Channels Tester', function() {
     var sla = require('../lib/sla.js')(client, inbound, '999')
       .catch(errHandler)
       .done();
-    answeringDelay = 4 * asyncDelay;
 
     cancelDialing();
     function cancelDialing() {
@@ -351,9 +350,10 @@ describe('SLA Bridge and Channels Tester', function() {
           inbound['hungup']) {
                 done();
           } else {
+            console.log(dialed);
             failToAnswer();
           }
-      }, asyncDelay);
+      }, answeringDelay);
     }
   });
 });
