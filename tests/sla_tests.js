@@ -192,7 +192,6 @@ describe('SLA Bridge and Channels Tester', function() {
 
 
   afterEach(function(done) {
-    dal.deleteTrunk(config, '999');
     bridges = [];
     usingExisting = false;
     validEndpoints = ['SIP/phone1', 'SIP/phone2'];
