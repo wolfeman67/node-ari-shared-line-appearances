@@ -42,6 +42,8 @@ var configurationFailed = false;
 // Whether or not there are no endpoints in the configuration (application
 // should fail out)
 var noStations = false;
+// Array containing device states
+var mockDeviceStates = [];
 
 // The mocked up version of the callback error function
 var errHandler = function(err) {
@@ -86,6 +88,36 @@ var getMockClient = function() {
       var newChan = getMockChannel();
       return newChan;
     };
+    this.deviceStates = {
+      update: function(param, cb) {
+        var exists = mockDeviceStates.filter(function(deviceState) {
+          return deviceState.deviceName === param.deviceName;
+        });
+        if (!exists.length) {
+          var ds = {deviceName: param.deviceName, 
+            deviceState: param.deviceState};
+          console.log(ds);
+          if (ds.deviceState === 'RINGING') {
+            ds.hasRung = true;
+          }
+          mockDeviceStates.push(ds);
+        } else {
+          console.log(exists);
+          mockDeviceStates.forEach(function(ds) {
+            if (ds.deviceName === param.deviceName) {
+              if (param.deviceState === 'INUSE') {
+                ds.hasBeenInUse = true;
+              }
+              if (param.deviceState === 'NOT_INUSE') {
+                ds.isIdle = true;
+              }
+              ds.deviceState = param.deviceState;
+            }
+          });
+        }
+        cb(null);
+      }
+    };
   };
   util.inherits(Client, Emitter);
   mockClient = new Client();
@@ -108,7 +140,7 @@ var getMockBridge = function(param) {
     this.id = bridgeId.toString();
     bridgeId += 1;
     this.addChannel = function(input, cb) {
-      channels.forEach( function(testChan){
+      channels.forEach(function(testChan) {
         input.channel.forEach(function(inputChannel){
           if (testChan.id === inputChannel) {
             bridgeChannels.push(testChan);
@@ -204,6 +236,7 @@ describe('SLA Bridge and Channels Tester', function() {
     noStations = false;
     config = 'tests/testConfigs/singleEndpoint.json';
     done();
+    mockDeviceStates = [];
   });
 
   // All of these tests also test the functionality of the
