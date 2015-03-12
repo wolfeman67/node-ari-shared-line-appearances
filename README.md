@@ -37,4 +37,4 @@ exten => 99,1,NoOp()
     same => n,Hangup()
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The application is invoked using app.js [configurationFilePathAndFileName] [sharedExtension]
+The application is invoked using node app.js [configurationFilePathAndFileName] [sharedExtension]
