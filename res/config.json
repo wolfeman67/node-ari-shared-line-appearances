@@ -1,3 +1,19 @@
 {
-  "trunks": []
+  "sharedExtensions": [
+  {
+    "leExtension": {
+      "trunks": [
+        {"42": 
+          {
+            "stations": [
+            {"endpoint": "SIP/100@tcambron"
+            },
+            {"endpoint": "SIP/bobmarley"}
+            ]
+          }
+        }
+      ]
+    }
+  }
+  ]
 }

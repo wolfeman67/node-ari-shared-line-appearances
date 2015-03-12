@@ -30,8 +30,9 @@ function clientLoaded (client) {
   client.on('StasisStart', function(event, channel) {
     if(!isDialed(event.args[0])) {
       var bridgeName = event.args[0];
-      var confFile = './res/config.json';
-      sla(client, confFile, channel, bridgeName)
+      var confFile = process.argv[2];
+      var sharedExtension = process.argv[3];
+      sla(client, confFile, sharedExtension, channel, bridgeName)
         .then(console.log)
         .catch(errHandler)
         .done();

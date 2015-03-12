@@ -3,7 +3,6 @@
  *
  */
 /*global describe:false*/
-/*global beforeEach:false*/
 /*global afterEach:false*/
 /*global it:false*/
 'use strict';
@@ -34,16 +33,24 @@ var isMixing = false;
 var validEndpoints = ['SIP/phone1', 'SIP/phone2'];
 // Conditional for whether or not we are using an existing bridge
 var usingExisting = false;
-// The directory and file for where the config file will be
-var config = './res/config.json';
+// The path and filename for the configuration
+var config = 'tests/testConfigs/singleEndpoint.json';
+// The extension (not the trunk) for all test instances to latch onto
+var extension= 'leExtension';
 // Whether or not reading the configuration file failed or not
 var configurationFailed = false;
+// Whether or not there are no endpoints in the configuration (application
+// should fail out)
+var noStations = false;
 
 // The mocked up version of the callback error function
 var errHandler = function(err) {
   console.error(err);
   if (err.name === 'InvalidConfiguration') {
     configurationFailed = true;
+  }
+  if (err.name === 'NoStations') {
+    noStations = true;
   }
 };
 
@@ -136,14 +143,19 @@ var getMockChannel = function() {
     this.originate = function(input, cb) {
       this.dialed = true;
       dialed.push(this);
+      if(this.id % 2 === 0) {
+        answeringDelay = answeringDelay * 2;
+      }
       var self = this;
       if(this.id % 2 === 0) {
         answeringDelay = answeringDelay * 2;
       }
       setTimeout(function() {
         if(validEndpoints.indexOf(input.endpoint) !== -1) {
+          if (channels.indexOf(self) !== -1) {
           self.emit('StasisStart', {channel: self}, self);
           cb(null);
+          }
         }
         else {
           cb(new Error(self.id + ' is an invalid channel'));
@@ -178,14 +190,6 @@ var getMockChannel = function() {
 describe('SLA Bridge and Channels Tester', function() {
 
 
-  beforeEach(function(done) {
-    dal.createTrunk(config, '999').then(function() {
-      dal.addStation(config, '999', 'SIP/phone1').then(function() {
-        done();
-      });
-    })
-    .catch(errHandler);
-  });
   afterEach(function(done) {
     bridges = [];
     usingExisting = false;
@@ -195,11 +199,10 @@ describe('SLA Bridge and Channels Tester', function() {
     isMixing = false;
     answeringDelay = asyncDelay;
     dialed = [];
-    config = './res/config.json';
-    dal.deleteTrunk(config, '999').then(function() {
-      done();
-    })
-    .catch(errHandler);
+    configurationFailed = false;
+    noStations = false;
+    config = 'tests/testConfigs/singleEndpoint.json';
+    done();
   });
 
   // All of these tests also test the functionality of the
@@ -207,12 +210,13 @@ describe('SLA Bridge and Channels Tester', function() {
   it('should create a bridge when there isn\'t one', function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
-    var sla = require('../lib/sla.js')(client, config, inbound, '999').done();
+    var sla = require('../lib/sla.js')(client, config, extension, inbound, '42')
+      .done();
 
     bridgeChecking();
     function bridgeChecking() {
       setTimeout(function() {
-        if(channels.length !== 0 && !usingExisting && isMixing) {
+        if(channels.length && !usingExisting && isMixing) {
           done();
         } else {
           bridgeChecking();
@@ -224,13 +228,14 @@ describe('SLA Bridge and Channels Tester', function() {
   it('should use a preexisting bridge if there is one', function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
-    var sla = require('../lib/sla.js')(client, config, inbound, '999').done();
+    var sla = require('../lib/sla.js')(client, config, extension, inbound, '42')
+      .done();
 
-    bridges.push(getMockBridge({type: 'mixing', name: '999'}, function(){}));
+    bridges.push(getMockBridge({type: 'mixing', name: '42'}, function(){}));
     bridgeChecking();
     function bridgeChecking() {
       setTimeout(function() {
-        if(channels.length !== 0 && usingExisting && isMixing) {
+        if(channels.length && usingExisting && isMixing) {
           done();
         } else {
           bridgeChecking();
@@ -243,7 +248,8 @@ describe('SLA Bridge and Channels Tester', function() {
      'to proceed to the next section', function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
-    var sla = require('../lib/sla.js')(client, config, inbound, '999').done();
+    var sla = require('../lib/sla.js')(client, config, extension, inbound, '42')
+      .done();
 
     validChecking();
     function validChecking() {
@@ -263,7 +269,7 @@ describe('SLA Bridge and Channels Tester', function() {
     validEndpoints = ['SIP/notphone'];
     var client = getMockClient();
     var inbound = getMockChannel();
-    var sla = require('../lib/sla.js')(client, config, inbound, '999')
+    var sla = require('../lib/sla.js')(client, config, extension, inbound, '42')
       .catch(errHandler)
       .done();
 
@@ -285,7 +291,8 @@ describe('SLA Bridge and Channels Tester', function() {
     var client = getMockClient();
     var inbound = getMockChannel();
     inbound.inbound = true;
-    var sla = require('../lib/sla.js')(client, config, inbound, 'invalid')
+    var sla = require('../lib/sla.js')(client, config, extension, inbound,
+      'invalid')
       .catch(errHandler)
       .done();
 
@@ -307,7 +314,7 @@ describe('SLA Bridge and Channels Tester', function() {
     var client = getMockClient();
     var inbound = getMockChannel();
     inbound.inbound = true;
-    var sla = require('../lib/sla.js')(client, config, inbound, '999')
+    var sla = require('../lib/sla.js')(client, config, extension, inbound, '42')
       .catch(errHandler)
       .done();
     answeringDelay = 2 * asyncDelay;
@@ -326,17 +333,70 @@ describe('SLA Bridge and Channels Tester', function() {
       }, asyncDelay);
     } 
   });
+  it('should hangup inbound channel if all dialed channles fail to answer',
+      function(done) {
+    var client = getMockClient();
+    var inbound = getMockChannel();
+    inbound['inbound'] = 'yes';
+    config='tests/testConfigs/multipleEndpoints.json';
+    var sla = require('../lib/sla.js')(client, config, extension, inbound, '42')
+      .catch(errHandler)
+      .done();
+    answeringDelay = 4 * asyncDelay;
+
+    failToAnswer();
+    setTimeout(function() {
+      dialed[0].hangup(function() {});
+      dialed[1].hangup(function() {});
+    }, asyncDelay);
+    function failToAnswer() {
+      setTimeout(function() {
+        if(isMixing && channels.length === 0 && bridges.length === 1 &&
+          inbound.inbound && inbound.wasAnswered && dialed[0] &&
+          dialed[1] && dialed[0].wasHungup && dialed[1].wasHungup && 
+          inbound.wasHungup) {
+                done();
+          } else {
+            failToAnswer();
+          }
+      }, answeringDelay);
+    }
+  });
+  it('should cancel the dialing of other channels if one dialed channel ' +
+      'answers', function(done) {
+    var client = getMockClient();
+    var inbound = getMockChannel();
+    inbound['inbound'] = 'yes';
+    config = 'tests/testConfigs/multipleEndpoints.json';
+    var sla = require('../lib/sla.js')(client, config, extension, inbound, '42')
+      .catch(errHandler)
+      .done();
+
+    cancelDialing();
+    function cancelDialing() {
+      setTimeout(function() {
+        if(isMixing && channels.length === 2 && bridges.length === 1 &&
+          inbound.inbound && inbound.wasAnswered && dialed[0] &&
+          dialed[1]) {
+            if((dialed[0].wasHungup && dialed[1].wasAnswered) ||
+              (dialed[1].wasHungup && dialed[0].wasAnswered)) {
+                done();
+              }
+          } else {
+            cancelDialing();
+          }
+      }, asyncDelay);
+    }
+  });
   it('should give the application an invalid configuration file and promptly ' +
       'fail out', function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
     inbound.inbound = true;
-    config = '../invalidConfig.json';
-    var sla = require('../lib/sla.js')(client, config, inbound, '999')
+    config = 'tests/testConfigs/invalidConfig.json';
+    var sla = require('../lib/sla.js')(client, config, extension, inbound, '42')
       .catch(errHandler)
       .done();
-    answeringDelay = 4 * asyncDelay;
-    inbound.hangup(function(){});
 
     invalidConfigurationFile();
     function invalidConfigurationFile() {
@@ -354,19 +414,18 @@ describe('SLA Bridge and Channels Tester', function() {
     var client = getMockClient();
     var inbound = getMockChannel();
     inbound.inbound = true;
-    var sla = require('../lib/sla.js')(client, config, inbound, '999')
+    config = 'tests/testConfigs/noEndpoints.json';
+    var sla = require('../lib/sla.js')(client, config, extension, inbound, '42')
       .catch(errHandler)
       .done();
-    answeringDelay = 4 * asyncDelay;
-    inbound.hangup(function(){});
 
-    invalidConfigurationFile();
-    function invalidConfigurationFile() {
+    noEndpoints();
+    function noEndpoints() {
       setTimeout(function() {
-        if(configurationFailed) {
+        if(noEndpoints) {
           done();
         } else {
-          invalidConfigurationFile();
+          noEndpoints();
         }
       }, asyncDelay);
     } 

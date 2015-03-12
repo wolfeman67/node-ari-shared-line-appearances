@@ -1,0 +1,16 @@
+{                                                                                
+  "sharedExtensions": [                                                          
+  {                                                                              
+    "leExtension": {                                                             
+      "trunks": [                                                                
+        {"42":                                                                   
+          {                                                                      
+            "stations": [                                                        
+            ]                                                                    
+          }                                                                      
+        }                                                                        
+      ]                                                                          
+    }                                                                            
+  }                                                                              
+  ]                                                                              
+}  
