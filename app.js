@@ -29,10 +29,9 @@ function clientLoaded (client) {
   client.start('sla');
   client.on('StasisStart', function(event, channel) {
     if(!isDialed(event.args[0])) {
-      var bridgeName = event.args[0];
+      var extension = event.args[0];
       var confFile = process.argv[2];
-      var sharedExtension = process.argv[3];
-      sla(client, confFile, sharedExtension, channel, bridgeName)
+      sla(client, channel, confFile, extension)
         .then(console.log)
         .catch(errHandler)
         .done();

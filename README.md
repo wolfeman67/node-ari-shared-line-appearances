@@ -11,7 +11,7 @@ It is also required that you have a valid configuration JSON file and a valid sh
 {                                                                                
   "sharedExtensions": [                                                          
   {                                                                              
-    "leExtension": {                                                             
+    "42": {                                                             
       "trunks": [                                                                
         {"42":                                                                   
           {                                                                      
@@ -28,13 +28,14 @@ It is also required that you have a valid configuration JSON file and a valid sh
   ]                                                                              
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Right now, however, this application only supports one trunk per sharedExtension, and the sharedExtension MUST have the same name as the trunk. The support for multiple trunks (such as 42A and 42B) will come later.
 
 You must also have a dialplan extension in extensions.conf that leads to the application (must have same name as what application is being started in the code) and that has an argument to represent the SLA bridge to reach.  An example is below:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-exten => 99,1,NoOp()                                                             
-    same => n,Stasis(sla,999)                                                    
+exten => 42,1,NoOp()                                                             
+    same => n,Stasis(sla,42)                                                    
     same => n,Hangup()
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The application is invoked using node app.js [configurationFilePathAndFileName] [sharedExtension]
+The application is invoked using node app.js [configurationFilePathAndFileName]

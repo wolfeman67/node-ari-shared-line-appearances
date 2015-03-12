@@ -210,7 +210,7 @@ describe('SLA Bridge and Channels Tester', function() {
   it('should create a bridge when there isn\'t one', function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
-    var sla = require('../lib/sla.js')(client, config, extension, inbound, '42')
+    var sla = require('../lib/sla.js')(client, inbound, config, '42')
       .done();
 
     bridgeChecking();
@@ -228,7 +228,7 @@ describe('SLA Bridge and Channels Tester', function() {
   it('should use a preexisting bridge if there is one', function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
-    var sla = require('../lib/sla.js')(client, config, extension, inbound, '42')
+    var sla = require('../lib/sla.js')(client, inbound, config, '42')
       .done();
 
     bridges.push(getMockBridge({type: 'mixing', name: '42'}, function(){}));
@@ -248,7 +248,7 @@ describe('SLA Bridge and Channels Tester', function() {
      'to proceed to the next section', function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
-    var sla = require('../lib/sla.js')(client, config, extension, inbound, '42')
+    var sla = require('../lib/sla.js')(client, inbound, config, '42')
       .done();
 
     validChecking();
@@ -269,7 +269,7 @@ describe('SLA Bridge and Channels Tester', function() {
     validEndpoints = ['SIP/notphone'];
     var client = getMockClient();
     var inbound = getMockChannel();
-    var sla = require('../lib/sla.js')(client, config, extension, inbound, '42')
+    var sla = require('../lib/sla.js')(client, inbound, config, '42')
       .catch(errHandler)
       .done();
 
@@ -291,8 +291,7 @@ describe('SLA Bridge and Channels Tester', function() {
     var client = getMockClient();
     var inbound = getMockChannel();
     inbound.inbound = true;
-    var sla = require('../lib/sla.js')(client, config, extension, inbound,
-      'invalid')
+    var sla = require('../lib/sla.js')(client, inbound, config, 'invalid')
       .catch(errHandler)
       .done();
 
@@ -303,6 +302,7 @@ describe('SLA Bridge and Channels Tester', function() {
           !inbound.wasAnswered && inbound.wasHungup && channels.length === 0) {
             done();
         } else {
+          console.log(bridges.length, inbound, dialed, channels.length);
           incorrectBridge();
         }
       }, asyncDelay);
@@ -314,7 +314,7 @@ describe('SLA Bridge and Channels Tester', function() {
     var client = getMockClient();
     var inbound = getMockChannel();
     inbound.inbound = true;
-    var sla = require('../lib/sla.js')(client, config, extension, inbound, '42')
+    var sla = require('../lib/sla.js')(client, inbound, config, '42')
       .catch(errHandler)
       .done();
     answeringDelay = 2 * asyncDelay;
@@ -337,9 +337,9 @@ describe('SLA Bridge and Channels Tester', function() {
       function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
-    inbound['inbound'] = 'yes';
+    inbound.inbound = true;
     config='tests/testConfigs/multipleEndpoints.json';
-    var sla = require('../lib/sla.js')(client, config, extension, inbound, '42')
+    var sla = require('../lib/sla.js')(client, inbound, config, '42')
       .catch(errHandler)
       .done();
     answeringDelay = 4 * asyncDelay;
@@ -366,9 +366,9 @@ describe('SLA Bridge and Channels Tester', function() {
       'answers', function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
-    inbound['inbound'] = 'yes';
-    config = 'tests/testConfigs/multipleEndpoints.json';
-    var sla = require('../lib/sla.js')(client, config, extension, inbound, '42')
+    inbound.inbound= true;
+    config='tests/testConfigs/multipleEndpoints.json';
+    var sla = require('../lib/sla.js')(client, inbound, config, '42')
       .catch(errHandler)
       .done();
 
@@ -393,8 +393,8 @@ describe('SLA Bridge and Channels Tester', function() {
     var client = getMockClient();
     var inbound = getMockChannel();
     inbound.inbound = true;
-    config = 'tests/testConfigs/invalidConfig.json';
-    var sla = require('../lib/sla.js')(client, config, extension, inbound, '42')
+    config = 'tests/testConfigs/invalid.json';
+    var sla = require('../lib/sla.js')(client, inbound, config, '42')
       .catch(errHandler)
       .done();
 
@@ -415,7 +415,7 @@ describe('SLA Bridge and Channels Tester', function() {
     var inbound = getMockChannel();
     inbound.inbound = true;
     config = 'tests/testConfigs/noEndpoints.json';
-    var sla = require('../lib/sla.js')(client, config, extension, inbound, '42')
+    var sla = require('../lib/sla.js')(client, inbound, config, '42')
       .catch(errHandler)
       .done();
 
