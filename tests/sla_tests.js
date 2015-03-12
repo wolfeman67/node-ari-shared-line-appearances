@@ -3,7 +3,6 @@
  *
  */
 /*global describe:false*/
-/*global beforeEach:false*/
 /*global afterEach:false*/
 /*global it:false*/
 'use strict';
@@ -292,7 +291,8 @@ describe('SLA Bridge and Channels Tester', function() {
     var client = getMockClient();
     var inbound = getMockChannel();
     inbound.inbound = true;
-    var sla = require('../lib/sla.js')(client, config, inbound, 'invalid')
+    var sla = require('../lib/sla.js')(client, config, extension, inbound,
+      'invalid')
       .catch(errHandler)
       .done();
 
@@ -371,8 +371,6 @@ describe('SLA Bridge and Channels Tester', function() {
     var sla = require('../lib/sla.js')(client, config, inbound, '42')
       .catch(errHandler)
       .done();
-    answeringDelay = 4 * asyncDelay;
-    inbound.hangup(function(){});
 
     invalidConfigurationFile();
     function invalidConfigurationFile() {

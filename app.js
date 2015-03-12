@@ -32,9 +32,17 @@ function isDialed(argument) {
 function clientLoaded (client) {
   client.start('sla');
   client.on('StasisStart', function(event, channel) {
+<<<<<<< HEAD
     if (!isDialed(event.args[0])) {
       var extension = event.args[0];
       sla(client, confFile, channel, extension)
+=======
+    if(!isDialed(event.args[0])) {
+      var bridgeName = event.args[0];
+      var confFile = process.argv[2];
+      var sharedExtension = process.argv[3];
+      sla(client, confFile, sharedExtension, channel, bridgeName)
+>>>>>>> Created a configuration parser DAL and fixed a couple of issues
         .then(console.log)
         .catch(errHandler)
         .done();
