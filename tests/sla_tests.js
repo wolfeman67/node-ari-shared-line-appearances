@@ -291,8 +291,7 @@ describe('SLA Bridge and Channels Tester', function() {
     var client = getMockClient();
     var inbound = getMockChannel();
     inbound.inbound = true;
-    var sla = require('../lib/sla.js')(client, config, extension, inbound,
-      'invalid')
+    var sla = require('../lib/sla.js')(client, inbound, config, 'invalid')
       .catch(errHandler)
       .done();
 
@@ -303,6 +302,7 @@ describe('SLA Bridge and Channels Tester', function() {
           !inbound.wasAnswered && inbound.wasHungup && channels.length === 0) {
             done();
         } else {
+          console.log(bridges.length, inbound, dialed, channels.length);
           incorrectBridge();
         }
       }, asyncDelay);
