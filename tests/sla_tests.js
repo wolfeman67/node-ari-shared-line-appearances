@@ -147,7 +147,7 @@ var getMockBridge = function(param) {
     this.id = bridgeId.toString();
     bridgeId += 1;
     this.addChannel = function(input, cb) {
-      channels.forEach(function(testChan) {
+      channels.forEach( function(testChan){
         input.channel.forEach(function(inputChannel){
           if (testChan.id === inputChannel) {
             bridgeChannels.push(testChan);
@@ -180,15 +180,12 @@ var getMockChannel = function() {
     this.id = channelId.toString();
     channelId += 1;
     this.originate = function(input, cb) {
-      this['dialed'] = 'yes';
+      this.dialed = true;
       dialed.push(this);
       if (this.id % 2 === 0) {
         answeringDelay = answeringDelay * 2;
       }
       var self = this;
-      if (this.id % 2 === 0) {
-        answeringDelay = answeringDelay * 2;
-      }
       setTimeout(function() {
         if (validEndpoints.indexOf(input.endpoint) !== -1) {
           if (channels.indexOf(self) !== -1) {
@@ -203,13 +200,13 @@ var getMockChannel = function() {
     };
     this.hangup = function(cb) {
       var self = this;
-      this['hungup'] = 'yes';
-      cb(null);
+      this.wasHungup = true;
       setTimeout(function() {
         if (channels.length) {
           channels = channels.filter(function(channel) {
             return channel !== self;
           });
+          cb(null);
           self.emit('ChannelHangupRequest', {channel: self}, self);
           self.emit('ChannelDestroyed', {channel: self}, self);
           cb(null);
@@ -217,7 +214,7 @@ var getMockChannel = function() {
       }, (asyncDelay/2));
     };
     this.answer = function(cb) {
-      this['answered'] = 'yes';
+      this.wasAnswered = true;
       cb(null);
     };
   };
@@ -229,7 +226,8 @@ var getMockChannel = function() {
 
 describe('SLA Bridge and Channels Tester', function() {
 
-  afterEach(function (done) {
+
+  afterEach(function(done) {
     bridges = [];
     usingExisting = false;
     validEndpoints = ['SIP/phone1', 'SIP/phone2'];
@@ -241,7 +239,6 @@ describe('SLA Bridge and Channels Tester', function() {
     configurationFailed = false;
     noStations = false;
     config = 'tests/testConfigs/singleEndpoint.json';
-    done();
     mockDeviceStates = [];
     ds = {};
     done();
@@ -358,7 +355,7 @@ describe('SLA Bridge and Channels Tester', function() {
     var sla = require('../lib/sla.js')(client, config, inbound, '42')
       .catch(errHandler)
       .done();
-    answeringDelay = 2 * asyncDelay;
+    answeringDelay = 4 * asyncDelay;
     inbound.hangup(function(){});
 
     earlyHangup();
@@ -374,16 +371,16 @@ describe('SLA Bridge and Channels Tester', function() {
       }, asyncDelay);
     } 
   });
-  it('should hangup inbound channel if all dialed channels fail to answer',
+  it('should hangup inbound channel if all dialed channles fail to answer',
       function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
-    inbound.inbound = true;
+    inbound['inbound'] = 'yes';
     config='tests/testConfigs/multipleEndpoints.json';
     var sla = require('../lib/sla.js')(client, config, inbound, '42')
       .catch(errHandler)
       .done();
-    answeringDelay = 2 * asyncDelay;
+    answeringDelay = 4 * asyncDelay;
 
     failToAnswer();
     setTimeout(function() {
@@ -392,7 +389,7 @@ describe('SLA Bridge and Channels Tester', function() {
     }, asyncDelay);
     function failToAnswer() {
       setTimeout(function() {
-        if (isMixing && channels.length === 0 && bridges.length === 1 &&
+        if(isMixing && channels.length === 0 && bridges.length === 1 &&
           inbound.inbound && inbound.wasAnswered && dialed[0] &&
           dialed[1] && dialed[0].wasHungup && dialed[1].wasHungup && 
           inbound.wasHungup) {
@@ -429,18 +426,71 @@ describe('SLA Bridge and Channels Tester', function() {
       }, asyncDelay);
     }
   });
+  it('should give the application an invalid configuration file and promptly ' +
+      'fail out', function(done) {
+    var client = getMockClient();
+    var inbound = getMockChannel();
+    inbound.inbound = true;
+    config = 'tests/testConfigs/invalidConfig.json';
+    var sla = require('../lib/sla.js')(client, config, extension, inbound, '10')
+      .catch(errHandler)
+      .done();
+
+    invalidConfigurationFile();
+    function invalidConfigurationFile() {
+      setTimeout(function() {
+        if(configurationFailed) {
+          done();
+        } else {
+          invalidConfigurationFile();
+        }
+      }, asyncDelay);
+    } 
+  });
+  it('should test the configuration when there are no endpoints and ' +
+      'fail out', function(done) {
+    var client = getMockClient();
+    var inbound = getMockChannel();
+    inbound.inbound = true;
+    config = 'tests/testConfigs/noEndpoints.json';
+    var sla = require('../lib/sla.js')(client, config, extension, inbound, '10')
+      .catch(errHandler)
+      .done();
+
+    noEndpoints();
+    function noEndpoints() {
+      setTimeout(function() {
+        if(noEndpoints) {
+          done();
+        } else {
+          noEndpoints();
+        }
+      }, asyncDelay);
+    } 
+  });
+  it('should hangup inbound channel if all dialed channles fail to answer',
+      function(done) {
+    var client = getMockClient();
+    var inbound = getMockChannel();
+    inbound['inbound'] = 'yes';
+    var sla = require('../lib/sla.js')(client, config, extension, inbound, '10')
   it('should mark a device as RINGING when dialing an outbound channel',
       function(done) {
+    var client = getMockClient();
+    var inbound = getMockChannel();
+    inbound['inbound'] = 'yes';
+    var sla = require('../lib/sla.js')(client, config, extension, inbound, '10')
+      .catch(errHandler)
+      .done();
     client.deviceStates.update({deviceName: 'Stasis:999',
       deviceState: 'NOT_INUSE'}, function() {});
-    answeringDelay = 2 * asyncDelay;
 
     markAsRinging();
     function markAsRinging() {
       setTimeout(function() {
         if(isMixing && bridges.length === 1 && inbound['inbound'] &&
           dialed[0] && mockDeviceStates[0].hasRung &&
-          mockDeviceStates[0].deviceName === 'Stasis:999') {
+          mockDeviceStates[0].deviceName === 'Stasis:10') {
             done();
           } else {
             markAsRinging();
@@ -453,19 +503,18 @@ describe('SLA Bridge and Channels Tester', function() {
     var client = getMockClient();
     var inbound = getMockChannel();
     inbound['inbound'] = 'yes';
-    var sla = require('../lib/sla.js')(client, inbound, '999')
+    var sla = require('../lib/sla.js')(client, config, extension, inbound, '10')
       .catch(errHandler)
       .done();
-    client.deviceStates.update({deviceName: 'Stasis:999',
+    client.deviceStates.update({deviceName: 'Stasis:10',
       deviceState: 'NOT_INUSE'}, function() {});
-    answeringDelay = 2 * asyncDelay;
 
     markAsRinging();
     function markAsRinging() {
       setTimeout(function() {
         if(isMixing && bridges.length === 1 && inbound['inbound'] &&
           dialed[0] && dialed[1] && mockDeviceStates[0].hasRung &&
-          mockDeviceStates[0].deviceName === 'Stasis:999') {
+          mockDeviceStates[0].deviceName === 'Stasis:10') {
             done();
         } else {
           markAsRinging();
@@ -502,7 +551,7 @@ describe('SLA Bridge and Channels Tester', function() {
     var sla = require('../lib/sla.js')(client, config, inbound, '42')
       .catch(errHandler)
       .done();
-    client.deviceStates.update({deviceName: 'Stasis:999',
+    client.deviceStates.update({deviceName: 'Stasis:10',
       deviceState: 'NOT_INUSE'}, function() {});
     answeringDelay = 2 * asyncDelay;
 
@@ -512,7 +561,7 @@ describe('SLA Bridge and Channels Tester', function() {
         if(isMixing && bridges.length === 1 && inbound['inbound'] &&
           dialed[0] && dialed[0].answered && inbound.answered &&
           mockDeviceStates[0].hasRung &&
-          mockDeviceStates[0].deviceName === 'Stasis:999' &&
+          mockDeviceStates[0].deviceName === 'Stasis:10' &&
           mockDeviceStates[0].hasBeenInUse) {
             done();
           } else {
@@ -550,7 +599,7 @@ describe('SLA Bridge and Channels Tester', function() {
     var sla = require('../lib/sla.js')(client, config, inbound, '42')
       .catch(errHandler)
       .done();
-    client.deviceStates.update({deviceName: 'Stasis:999',
+    client.deviceStates.update({deviceName: 'Stasis:10',
       deviceState: 'NOT_INUSE'}, function() {});
     answeringDelay = 2 * asyncDelay;
 
@@ -577,10 +626,11 @@ describe('SLA Bridge and Channels Tester', function() {
     var client = getMockClient();
     var inbound = getMockChannel();
     inbound['inbound'] = 'yes';
-    var sla = require('../lib/sla.js')(client, inbound, '999')
+    bridges.push(getMockBridge({type: 'mixing', name: '10'}, function(){}));
+    var sla = require('../lib/sla.js')(client, config, extension, inbound, '10')
       .catch(errHandler)
       .done();
-    client.deviceStates.update({deviceName: 'Stasis:999',
+    client.deviceStates.update({deviceName: 'Stasis:10',
       deviceState: 'NOT_INUSE', hasBeenInUse: false},
       function() {});
     answeringDelay = 2 * asyncDelay;
