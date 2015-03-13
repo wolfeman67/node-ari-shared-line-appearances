@@ -125,7 +125,7 @@ var getMockChannel = function() {
     this.id = channelId.toString();
     channelId += 1;
     this.originate = function(input, cb) {
-      this['dialed'] = 'yes';
+      this.dialed = true;
       dialed.push(this);
       var self = this;
       if(this.id % 2 === 0) {
@@ -143,8 +143,7 @@ var getMockChannel = function() {
     };
     this.hangup = function(cb) {
       var self = this;
-      this['hungup'] = 'yes';
-      cb(null);
+      this.hungup = true;
       setTimeout(function() {
         if(channels.length) {
           channels = channels.filter(function(channel) {
@@ -152,11 +151,12 @@ var getMockChannel = function() {
           });
           self.emit('ChannelHangupRequest', {channel: self}, self);
           self.emit('ChannelDestroyed', {channel: self}, self);
+          cb(null);
         }
       }, (asyncDelay/2));
     };
     this.answer = function(cb) {
-      this['answered'] = 'yes';
+      this.answered = true;
       cb(null);
     };
   };
@@ -224,8 +224,8 @@ describe('SLA Bridge and Channels Tester', function() {
     validChecking();
     function validChecking() {
       setTimeout(function() {
-        if(dialed[0] && dialed[0]['answered'] && bridgeChannels.length !== 0 &&
-          isMixing && inbound['answered']) {
+        if(dialed[0] && dialed[0].answered && bridgeChannels.length !== 0 &&
+          isMixing && inbound.answered) {
           done();
         } else {
           validChecking();
@@ -246,8 +246,8 @@ describe('SLA Bridge and Channels Tester', function() {
     invalidChecking();
     function invalidChecking() {
       setTimeout(function() {
-        if(dialed[0] && !dialed[0]['answered'] && bridgeChannels.length === 0 &&
-          isMixing && inbound['answered']) {
+        if(dialed[0] && !dialed[0].answered && bridgeChannels.length === 0 &&
+          isMixing && inbound.answered) {
           done();
         } else {
           invalidChecking();
@@ -260,7 +260,7 @@ describe('SLA Bridge and Channels Tester', function() {
      function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
-    inbound['inbound'] = 'yes';
+    inbound.inbound = true;
     var sla = require('../lib/sla.js')(client, inbound, 'invalid')
       .catch(errHandler)
       .done();
@@ -268,8 +268,8 @@ describe('SLA Bridge and Channels Tester', function() {
     incorrectBridge();
     function incorrectBridge() {
       setTimeout(function() {
-        if(bridges.length === 0 && !dialed[0] && inbound['inbound'] &&
-          !inbound['answered'] && inbound['hungup'] && channels.length === 0) {
+        if(bridges.length === 0 && !dialed[0] && inbound.inbound &&
+          !inbound.answered && inbound.hungup && channels.length === 0) {
             done();
         } else {
           incorrectBridge();
@@ -282,19 +282,19 @@ describe('SLA Bridge and Channels Tester', function() {
      function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
-    inbound['inbound'] = 'yes';
+    inbound.inbound = true;
     var sla = require('../lib/sla.js')(client, inbound, '999')
       .catch(errHandler)
       .done();
-    answeringDelay = 4 * asyncDelay;
+    answeringDelay = 2 * asyncDelay;
     inbound.hangup(function(){});
 
     earlyHangup();
     function earlyHangup() {
       setTimeout(function() {
         if(isMixing && channels.length === 0 && bridges.length === 1 &&
-          inbound['inbound'] && inbound['answered'] && inbound['hungup'] &&
-          dialed[0] && dialed[0]['hungup'] && !dialed[0]['answered']) {
+          inbound.inbound && inbound.answered && inbound.hungup &&
+          dialed[0] && dialed[0].hungup && !dialed[0].answered) {
           done();
         } else {
           earlyHangup();
@@ -306,7 +306,7 @@ describe('SLA Bridge and Channels Tester', function() {
       'answers', function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
-    inbound['inbound'] = 'yes';
+    inbound.inbound = true;
     var sla = require('../lib/sla.js')(client, inbound, '999')
       .catch(errHandler)
       .done();
@@ -315,10 +315,10 @@ describe('SLA Bridge and Channels Tester', function() {
     function cancelDialing() {
       setTimeout(function() {
         if(isMixing && channels.length === 2 && bridges.length === 1 &&
-          inbound['inbound'] && inbound['answered'] && dialed[0] &&
+          inbound.inbound && inbound.answered && dialed[0] &&
           dialed[1]) {
-            if((dialed[0]['hungup'] && dialed[1]['answered']) ||
-              (dialed[1]['hungup'] && dialed[0]['answered'])) {
+            if((dialed[0].hungup && dialed[1].answered) ||
+              (dialed[1].hungup && dialed[0].answered)) {
                 done();
               }
           } else {
@@ -331,11 +331,11 @@ describe('SLA Bridge and Channels Tester', function() {
       function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
-    inbound['inbound'] = 'yes';
+    inbound.inbound = true;
     var sla = require('../lib/sla.js')(client, inbound, '999')
       .catch(errHandler)
       .done();
-    answeringDelay = 4 * asyncDelay;
+    answeringDelay = 2 * asyncDelay;
 
     failToAnswer();
     setTimeout(function() {
@@ -345,12 +345,11 @@ describe('SLA Bridge and Channels Tester', function() {
     function failToAnswer() {
       setTimeout(function() {
         if(isMixing && channels.length === 0 && bridges.length === 1 &&
-          inbound['inbound'] && inbound['answered'] && dialed[0] &&
-          dialed[1] && dialed[0]['hungup'] && dialed[1]['hungup'] && 
-          inbound['hungup']) {
+          inbound.inbound && inbound.answered && dialed[0] &&
+          dialed[1] && dialed[0].hungup && dialed[1].hungup && 
+          inbound.hungup) {
                 done();
           } else {
-            console.log(dialed);
             failToAnswer();
           }
       }, answeringDelay);
