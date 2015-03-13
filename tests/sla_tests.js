@@ -302,7 +302,6 @@ describe('SLA Bridge and Channels Tester', function() {
           !inbound.wasAnswered && inbound.wasHungup && channels.length === 0) {
             done();
         } else {
-          console.log(bridges.length, inbound, dialed, channels.length);
           incorrectBridge();
         }
       }, asyncDelay);

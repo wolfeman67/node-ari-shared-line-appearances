@@ -1,19 +1,22 @@
-{                                                                                
-  "sharedExtensions": [                                                          
-  {                                                                              
-    "42": {                                                             
-      "trunks": [                                                                
-        {"42":                                                                   
-          {                                                                      
-            "stations": [                                                        
-            {"endpoint": "SIP/phone1"                                      
-            },                                                                   
-            {"endpoint": "SIP/phone2"}                                        
-            ]                                                                    
-          }                                                                      
-        }                                                                        
-      ]                                                                          
-    }                                                                            
-  }                                                                              
-  ]                                                                              
-}  
+{
+  "sharedExtensions": [
+    {
+      "42": {
+        "trunks": [
+          {
+            "42": {
+              "stations": [
+                {
+                  "endpoint": "SIP/phone1"
+                },
+                {
+                  "endpoint": "SIP/phone2"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

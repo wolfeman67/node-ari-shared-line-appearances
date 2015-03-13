@@ -6,11 +6,15 @@ var sla = require('./lib/sla.js');
 var Q = require('q');
 
 var connect = Q.denodeify(ari.connect);
-
-connect('http://127.0.0.1:8088', 'user', 'pass')
-  .then(clientLoaded)
-  .catch(errHandler)
-  .done();
+var confFile;
+if (confFile = process.argv[2]) {
+  connect('http://127.0.0.1:8088', 'user', 'pass')
+    .then(clientLoaded)
+    .catch(errHandler)
+    .done();
+} else {
+  console.error('No configuration file specified');
+}
 
 /**
  * Checks if the argument tied to the StasisStart event is dialed (not inbound)
@@ -30,7 +34,6 @@ function clientLoaded (client) {
   client.on('StasisStart', function(event, channel) {
     if(!isDialed(event.args[0])) {
       var extension = event.args[0];
-      var confFile = process.argv[2];
       sla(client, channel, confFile, extension)
         .then(console.log)
         .catch(errHandler)
@@ -39,13 +42,25 @@ function clientLoaded (client) {
   });
 }
 
+/** Utility function for seeing if an error is fatal (crashes the program)
+ * @param {Object} err - the error in question.
+ * @return {boolean} - if the error is fatal or not
+ */
+function isFatal(err) {
+  if(err.name === 'EarlyHangup' || err.anme === 'HangupFailure' ||
+      err.name === 'NoStations') {
+        return true;
+      } else {
+        return false;
+      }
+}
+
 /**
  * Handles errors found in application.
  * @param {Object} err - error from application.
  */
 function errHandler(err) {
-  if(err.name === 'EarlyHangup' || err.name === 'HangupFailure' ||
-    err.name === 'NoStations') {
+  if(isFatal(err)) {
    console.log(err.message);
   } else {
    throw err;
