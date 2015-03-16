@@ -143,7 +143,7 @@ var getMockChannel = function() {
     };
     this.hangup = function(cb) {
       var self = this;
-      this.hungup = true;
+      this.wasHungup = true;
       setTimeout(function() {
         if(channels.length) {
           channels = channels.filter(function(channel) {
@@ -156,7 +156,7 @@ var getMockChannel = function() {
       }, (asyncDelay/2));
     };
     this.answer = function(cb) {
-      this.answered = true;
+      this.wasAnswered = true;
       cb(null);
     };
   };
@@ -224,8 +224,8 @@ describe('SLA Bridge and Channels Tester', function() {
     validChecking();
     function validChecking() {
       setTimeout(function() {
-        if(dialed[0] && dialed[0].answered && bridgeChannels.length !== 0 &&
-          isMixing && inbound.answered) {
+        if(dialed[0] && dialed[0].wasAnswered && bridgeChannels.length !== 0 &&
+          isMixing && inbound.wasAnswered) {
           done();
         } else {
           validChecking();
@@ -246,8 +246,8 @@ describe('SLA Bridge and Channels Tester', function() {
     invalidChecking();
     function invalidChecking() {
       setTimeout(function() {
-        if(dialed[0] && !dialed[0].answered && bridgeChannels.length === 0 &&
-          isMixing && inbound.answered) {
+        if(dialed[0] && !dialed[0].wasAnswered && bridgeChannels.length === 0 &&
+          isMixing && inbound.wasAnswered) {
           done();
         } else {
           invalidChecking();
@@ -256,7 +256,7 @@ describe('SLA Bridge and Channels Tester', function() {
     } 
   });
   it('should enter the application but specify an invalid SLA bridge. The ' +
-      'inbound channel should be hung up before being answered by the app.',
+      'inbound channel should be hung up before being.wasAnswered by the app.',
      function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
@@ -269,7 +269,7 @@ describe('SLA Bridge and Channels Tester', function() {
     function incorrectBridge() {
       setTimeout(function() {
         if(bridges.length === 0 && !dialed[0] && inbound.inbound &&
-          !inbound.answered && inbound.hungup && channels.length === 0) {
+          !inbound.wasAnswered && inbound.wasHungup && channels.length === 0) {
             done();
         } else {
           incorrectBridge();
@@ -293,8 +293,8 @@ describe('SLA Bridge and Channels Tester', function() {
     function earlyHangup() {
       setTimeout(function() {
         if(isMixing && channels.length === 0 && bridges.length === 1 &&
-          inbound.inbound && inbound.answered && inbound.hungup &&
-          dialed[0] && dialed[0].hungup && !dialed[0].answered) {
+          inbound.inbound && inbound.wasAnswered && inbound.wasHungup &&
+          dialed[0] && dialed[0].wasHungup && !dialed[0].wasAnswered) {
           done();
         } else {
           earlyHangup();
@@ -315,10 +315,10 @@ describe('SLA Bridge and Channels Tester', function() {
     function cancelDialing() {
       setTimeout(function() {
         if(isMixing && channels.length === 2 && bridges.length === 1 &&
-          inbound.inbound && inbound.answered && dialed[0] &&
+          inbound.inbound && inbound.wasAnswered && dialed[0] &&
           dialed[1]) {
-            if((dialed[0].hungup && dialed[1].answered) ||
-              (dialed[1].hungup && dialed[0].answered)) {
+            if((dialed[0].wasHungup && dialed[1].wasAnswered) ||
+              (dialed[1].wasHungup && dialed[0].wasAnswered)) {
                 done();
               }
           } else {
@@ -345,9 +345,9 @@ describe('SLA Bridge and Channels Tester', function() {
     function failToAnswer() {
       setTimeout(function() {
         if(isMixing && channels.length === 0 && bridges.length === 1 &&
-          inbound.inbound && inbound.answered && dialed[0] &&
-          dialed[1] && dialed[0].hungup && dialed[1].hungup && 
-          inbound.hungup) {
+          inbound.inbound && inbound.wasAnswered && dialed[0] &&
+          dialed[1] && dialed[0].wasHungup && dialed[1].wasHungup && 
+          inbound.wasHungup) {
                 done();
           } else {
             failToAnswer();
