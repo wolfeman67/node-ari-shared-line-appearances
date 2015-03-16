@@ -29,7 +29,7 @@ var bridgeChannels = [];
 // Conditional for whether or not the created bridge is specified as mixing
 var isMixing = false;
 // Mocks a valid endpoint for originating
-var validEndpoint = 'SIP/phone';
+var validEndpoints = ['SIP/phone1', 'SIP/phone2'];
 // Conditional for whether or not we are using an existing bridge
 var usingExisting = false;
 
@@ -128,8 +128,11 @@ var getMockChannel = function() {
       this.dialed = true;
       dialed.push(this);
       var self = this;
+      if(this.id % 2 === 0) {
+        answeringDelay = answeringDelay * 2;
+      }
       setTimeout(function() {
-        if(validEndpoint === input.endpoint) {
+        if(validEndpoints.indexOf(input.endpoint) > -1) {
           self.emit('StasisStart', {channel: self}, self);
           cb(null);
         }
@@ -146,9 +149,9 @@ var getMockChannel = function() {
           channels = channels.filter(function(channel) {
             return channel !== self;
           });
-          cb(null);
           self.emit('ChannelHangupRequest', {channel: self}, self);
           self.emit('ChannelDestroyed', {channel: self}, self);
+          cb(null);
         }
       }, (asyncDelay/2));
     };
@@ -168,7 +171,7 @@ describe('SLA Bridge and Channels Tester', function() {
   afterEach(function(done) {
     bridges = [];
     usingExisting = false;
-    validEndpoint = 'SIP/phone';
+    validEndpoints = ['SIP/phone1', 'SIP/phone2'];
     channels = [];
     bridgeChannels = [];
     isMixing = false;
@@ -233,7 +236,7 @@ describe('SLA Bridge and Channels Tester', function() {
 
   it('should dial an "invalid" endpoint and not give off a StasisStart event',
      function(done) {
-    validEndpoint = 'SIP/notphone';
+    validEndpoints = ['SIP/notphone'];
     var client = getMockClient();
     var inbound = getMockChannel();
     var sla = require('../lib/sla.js')(client, inbound, '999')
@@ -253,7 +256,7 @@ describe('SLA Bridge and Channels Tester', function() {
     } 
   });
   it('should enter the application but specify an invalid SLA bridge. The ' +
-      'inbound channel should be hung up before being answered by the app.',
+      'inbound channel should be hung up before being.wasAnswered by the app.',
      function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
@@ -283,7 +286,7 @@ describe('SLA Bridge and Channels Tester', function() {
     var sla = require('../lib/sla.js')(client, inbound, '999')
       .catch(errHandler)
       .done();
-    answeringDelay = 4 * asyncDelay;
+    answeringDelay = 2 * asyncDelay;
     inbound.hangup(function(){});
 
     earlyHangup();
@@ -298,5 +301,58 @@ describe('SLA Bridge and Channels Tester', function() {
         }
       }, asyncDelay);
     } 
+  });
+  it('should cancel the dialing of other channels if one dialed channel ' +
+      'answers', function(done) {
+    var client = getMockClient();
+    var inbound = getMockChannel();
+    inbound.inbound = true;
+    var sla = require('../lib/sla.js')(client, inbound, '999')
+      .catch(errHandler)
+      .done();
+
+    cancelDialing();
+    function cancelDialing() {
+      setTimeout(function() {
+        if(isMixing && channels.length === 2 && bridges.length === 1 &&
+          inbound.inbound && inbound.wasAnswered && dialed[0] &&
+          dialed[1]) {
+            if((dialed[0].wasHungup && dialed[1].wasAnswered) ||
+              (dialed[1].wasHungup && dialed[0].wasAnswered)) {
+                done();
+              }
+          } else {
+            cancelDialing();
+          }
+      }, asyncDelay);
+    }
+  });
+  it('should hangup inbound channel if all dialed channles fail to answer',
+      function(done) {
+    var client = getMockClient();
+    var inbound = getMockChannel();
+    inbound.inbound = true;
+    var sla = require('../lib/sla.js')(client, inbound, '999')
+      .catch(errHandler)
+      .done();
+    answeringDelay = 2 * asyncDelay;
+
+    failToAnswer();
+    setTimeout(function() {
+      dialed[0].hangup(function() {});
+      dialed[1].hangup(function() {});
+    }, asyncDelay);
+    function failToAnswer() {
+      setTimeout(function() {
+        if(isMixing && channels.length === 0 && bridges.length === 1 &&
+          inbound.inbound && inbound.wasAnswered && dialed[0] &&
+          dialed[1] && dialed[0].wasHungup && dialed[1].wasHungup && 
+          inbound.wasHungup) {
+                done();
+          } else {
+            failToAnswer();
+          }
+      }, answeringDelay);
+    }
   });
 });
