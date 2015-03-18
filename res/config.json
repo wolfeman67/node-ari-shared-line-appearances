@@ -11,7 +11,7 @@
               ]
             }
           }
-        ]
+        ],
        "stations": [
          {"endpoint": "SIP/100@tcambron"
          },
