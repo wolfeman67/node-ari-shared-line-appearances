@@ -13,7 +13,7 @@ if (confFile = process.argv[2]) {
     .catch(errHandler)
     .done();
 } else {
-  console.error('No configuration file specified');
+  throw new Error('No configuration file specified');
 }
 
 /**
@@ -32,9 +32,9 @@ function isDialed(argument) {
 function clientLoaded (client) {
   client.start('sla');
   client.on('StasisStart', function(event, channel) {
-    if(!isDialed(event.args[0])) {
+    if (!isDialed(event.args[0])) {
       var extension = event.args[0];
-      sla(client, channel, confFile, extension)
+      sla(client, confFile, channel, extension)
         .then(console.log)
         .catch(errHandler)
         .done();
@@ -47,7 +47,7 @@ function clientLoaded (client) {
  * @return {boolean} - if the error is fatal or not
  */
 function isFatal(err) {
-  if(err.name === 'EarlyHangup' || err.anme === 'HangupFailure' ||
+  if (err.name === 'EarlyHangup' || err.anme === 'HangupFailure' ||
       err.name === 'NoStations') {
         return true;
       } else {
@@ -60,7 +60,7 @@ function isFatal(err) {
  * @param {Object} err - error from application.
  */
 function errHandler(err) {
-  if(isFatal(err)) {
+  if (isFatal(err)) {
    console.log(err.message);
   } else {
    throw err;
