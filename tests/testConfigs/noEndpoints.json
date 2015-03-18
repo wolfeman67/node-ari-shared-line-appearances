@@ -6,9 +6,6 @@
           {
             "42": {
               "stations": [
-                {
-                  "endpoint": "SIP/phone1"
-                }
               ]
             }
           }
