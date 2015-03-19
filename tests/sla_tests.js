@@ -400,7 +400,7 @@ describe('SLA Bridge and Channels Tester', function() {
     invalidConfigurationFile();
     function invalidConfigurationFile() {
       setTimeout(function() {
-        if(configurationFailed) {
+        if (configurationFailed) {
           done();
         } else {
           invalidConfigurationFile();
