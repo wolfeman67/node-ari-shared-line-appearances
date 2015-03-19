@@ -24,7 +24,8 @@
     "node-ari-client"
   ],
   "dependencies": {
-    "ari-client": "^0.1.6"
+    "ari-client": "^0.1.6",
+    "node-regexp": "^0.1.1"
   },
   "license": "Apache-2",
   "devDependencies": {

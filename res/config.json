@@ -6,15 +6,12 @@
           {
             "A": {
               "stations": [
-                "SIP/100@tcambron",
                 "SIP/bobmarley"
               ]
             }
           }
         ],
        "stations": [
-         {"endpoint": "SIP/100@tcambron"
-         },
          {"endpoint": "SIP/bobmarley"
          }
         ]

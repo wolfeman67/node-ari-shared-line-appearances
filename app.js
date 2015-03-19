@@ -4,6 +4,7 @@ var ari = require('ari-client');
 var util = require('util');
 var sla = require('./lib/sla.js');
 var Q = require('q');
+var dal = require('./lib/dal.js');
 
 var connect = Q.denodeify(ari.connect);
 var confFile;
