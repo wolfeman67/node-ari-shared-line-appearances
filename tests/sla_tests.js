@@ -57,7 +57,7 @@ var errHandler = function(err) {
 };
 
 // Millesecond delay for mock requests
-var asyncDelay = 420;
+var asyncDelay = 100;
 // The delay of answering (important for StasisStart events)
 var answeringDelay = asyncDelay;
 
@@ -322,7 +322,7 @@ describe('SLA Bridge and Channels Tester', function() {
     } 
   });
   it('should enter the application but specify an invalid SLA bridge. The ' +
-      'inbound channel should be hung up before being.wasAnswered by the app.',
+      'inbound channel should be hung up before being answered by the app.',
      function(done) {
     var client = getMockClient();
     var inbound = getMockChannel();
@@ -377,7 +377,7 @@ describe('SLA Bridge and Channels Tester', function() {
     var sla = require('../lib/sla.js')(client, config, inbound, '42')
       .catch(errHandler)
       .done();
-    answeringDelay = 4 * asyncDelay;
+    answeringDelay = 2 * asyncDelay;
 
     failToAnswer();
     setTimeout(function() {
