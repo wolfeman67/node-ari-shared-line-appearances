@@ -96,7 +96,7 @@ var getMockClient = function() {
         if (!exists.length) {
           ds = {deviceName: param.deviceName, 
             deviceState: param.deviceState, hasBeenInUse: false};
-          if(ds.deviceState === 'NOT_INUSE') {
+          if (ds.deviceState === 'NOT_INUSE') {
             ds.isIdle = true;
           }
           mockDeviceStates.push(ds);
@@ -142,8 +142,8 @@ var getMockBridge = function(param) {
     this.id = bridgeId.toString();
     bridgeId += 1;
     this.addChannel = function(input, cb) {
-      channels.forEach( function(testChan){
-        input.channel.forEach(function(inputChannel){
+      channels.forEach( function(testChan) {
+        input.channel.forEach(function(inputChannel) {
           if (testChan.id === inputChannel) {
             bridgeChannels.push(testChan);
           }
@@ -267,7 +267,7 @@ describe('SLA Bridge and Channels Tester', function() {
     var sla = require('../lib/sla.js')(client, config, inbound, '42')
       .done();
 
-    bridges.push(getMockBridge({type: 'mixing', name: '42'}, function(){}));
+    bridges.push(getMockBridge({type: 'mixing', name: '42'}, function() {}));
     bridgeChecking();
     function bridgeChecking() {
       setTimeout(function() {
@@ -353,7 +353,7 @@ describe('SLA Bridge and Channels Tester', function() {
       .catch(errHandler)
       .done();
     answeringDelay = 2 * asyncDelay;
-    inbound.hangup(function(){});
+    inbound.hangup(function() {});
 
     earlyHangup();
     function earlyHangup() {
@@ -436,7 +436,7 @@ describe('SLA Bridge and Channels Tester', function() {
     invalidConfigurationFile();
     function invalidConfigurationFile() {
       setTimeout(function() {
-        if(configurationFailed) {
+        if (configurationFailed) {
           done();
         } else {
           invalidConfigurationFile();
@@ -480,7 +480,7 @@ describe('SLA Bridge and Channels Tester', function() {
     markAsRinging();
     function markAsRinging() {
       setTimeout(function() {
-        if(isMixing && bridges.length === 1 && inbound.inbound &&
+        if (isMixing && bridges.length === 1 && inbound.inbound &&
           dialed[0] && mockDeviceStates[0].hasRung &&
           mockDeviceStates[0].deviceName === 'Stasis:42') {
             done();
@@ -505,7 +505,7 @@ describe('SLA Bridge and Channels Tester', function() {
     markAsRinging();
     function markAsRinging() {
       setTimeout(function() {
-        if(isMixing && bridges.length === 1 && inbound.inbound &&
+        if (isMixing && bridges.length === 1 && inbound.inbound &&
           dialed[0] && dialed[1] && mockDeviceStates[0].hasRung &&
           mockDeviceStates[0].deviceName === 'Stasis:42') {
             done();
@@ -551,7 +551,7 @@ describe('SLA Bridge and Channels Tester', function() {
     markAsRinging();
     function markAsRinging() {
       setTimeout(function() {
-        if(isMixing && bridges.length === 1 && inbound.inbound &&
+        if (isMixing && bridges.length === 1 && inbound.inbound &&
           dialed[0] && dialed[0].wasAnswered && inbound.wasAnswered &&
           mockDeviceStates[0].hasRung &&
           mockDeviceStates[0].deviceName === 'Stasis:42' &&
@@ -604,7 +604,7 @@ describe('SLA Bridge and Channels Tester', function() {
     }, asyncDelay);
     function markAsRinging() {
       setTimeout(function() {
-        if(isMixing && bridges.length === 1 && inbound.inbound &&
+        if (isMixing && bridges.length === 1 && inbound.inbound &&
           dialed[0] && dialed[1] && inbound.wasAnswered &&
           !dialed[0].wasAnswered && !dialed[1].wasAnswered &&
           mockDeviceStates[0].hasRung && mockDeviceStates[0].isIdle) {
@@ -620,7 +620,7 @@ describe('SLA Bridge and Channels Tester', function() {
     var client = getMockClient();
     var inbound = getMockChannel();
     inbound.inbound = true;
-    bridges.push(getMockBridge({type: 'mixing', name: '42'}, function(){}));
+    bridges.push(getMockBridge({type: 'mixing', name: '42'}, function() {}));
     var sla = require('../lib/sla.js')(client, config, inbound, '42')
       .catch(errHandler)
       .done();
@@ -632,7 +632,7 @@ describe('SLA Bridge and Channels Tester', function() {
     markAsRinging();
     function markAsRinging() {
       setTimeout(function() {
-        if(isMixing && bridges.length === 1 &&
+        if (isMixing && bridges.length === 1 &&
           !mockDeviceStates[0].hasBeenInUse) {
             done();
         } else {
