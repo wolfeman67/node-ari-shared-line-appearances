@@ -35,7 +35,7 @@ function clientLoaded (client) {
   client.on('StasisStart', function(event, channel) {
     if (!isDialed(event.args[0])) {
       var extension = event.args[0];
-      sla(client, confFile, channel, extension, dal)
+      sla(client, confFile, channel, extension)
         .then(console.log)
         .catch(errHandler)
         .done();
@@ -48,12 +48,9 @@ function clientLoaded (client) {
  * @return {boolean} - if the error is fatal or not
  */
 function isFatal(err) {
-  if (err.name === 'EarlyHangup' || err.anme === 'HangupFailure' ||
-      err.name === 'NoStations') {
-        return true;
-      } else {
-        return false;
-      }
+  return !(err.name === 'EarlyHangup' || err.name === 'HangupFailure' ||
+      err.name === 'NoStations' || err.name === 'ExtensionBusy' ||
+      err.name === 'ExtensionBusy');
 }
 
 /**
@@ -61,7 +58,7 @@ function isFatal(err) {
  * @param {Object} err - error from application.
  */
 function errHandler(err) {
-  if (isFatal(err)) {
+  if (!isFatal(err)) {
    console.log(err.message);
   } else {
    throw err;

@@ -9,10 +9,19 @@
                 "SIP/bobmarley"
               ]
             }
+          },
+          {
+            "B": {
+              "stations": [
+                "SIP/100@tcambron"
+              ]
+            }
           }
         ],
        "stations": [
          {"endpoint": "SIP/bobmarley"
+         },
+         {"endpoint": "SIP/100@tcambron"
          }
         ]
       }
