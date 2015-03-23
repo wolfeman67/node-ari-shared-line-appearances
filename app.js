@@ -47,12 +47,8 @@ function clientLoaded (client) {
  * @return {boolean} - if the error is fatal or not
  */
 function isFatal(err) {
-  if (err.name === 'EarlyHangup' || err.anme === 'HangupFailure' ||
-      err.name === 'NoStations') {
-        return true;
-      } else {
-        return false;
-      }
+  return !(err.name === 'EarlyHangup' || err.name === 'HangupFailure' ||
+      err.name === 'NoStations');
 }
 
 /**
@@ -60,7 +56,7 @@ function isFatal(err) {
  * @param {Object} err - error from application.
  */
 function errHandler(err) {
-  if (isFatal(err)) {
+  if (!isFatal(err)) {
    console.log(err.message);
   } else {
    throw err;
