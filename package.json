@@ -25,6 +25,7 @@
   ],
   "dependencies": {
     "ari-client": "^0.1.6",
+    "ip": "^0.3.2",
     "node-regexp": "^0.1.1"
   },
   "license": "Apache-2",
