@@ -1,0 +1,16 @@
+{
+  "sharedExtensions": [
+    {
+      "42": {
+        "trunks": [
+          {
+            "42": {
+              "stations": [
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
