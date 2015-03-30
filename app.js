@@ -48,9 +48,14 @@ function clientLoaded (client) {
  * @return {boolean} - if the error is fatal or not
  */
 function isFatal(err) {
+<<<<<<< HEAD
   return !(err.name === 'EarlyHangup' || err.name === 'HangupFailure' ||
       err.name === 'NoStations' || err.name === 'ExtensionBusy' ||
       err.name === 'ExtensionBusy');
+=======
+  return !(err.name === 'InboundHungup' || err.name === 'DialedHungup' ||
+      err.name === 'HangupFailure' || err.name === 'NoStations');
+>>>>>>> origin
 }
 
 /**
