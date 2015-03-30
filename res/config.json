@@ -3,26 +3,12 @@
     {
       "42": {
         "trunks": [
-          {
-            "A": {
-              "stations": [
-                "SIP/bobmarley"
-              ]
-            }
-          },
-          {
-            "B": {
-              "stations": [
-                "SIP/100@tcambron"
-              ]
-            }
-          }
+          "42-A",
+          "42-B"
         ],
        "stations": [
-         {"endpoint": "SIP/bobmarley"
-         },
-         {"endpoint": "SIP/100@tcambron"
-         }
+         "SIP/bobmarley",
+         "SIP/100@tcambron"
         ]
       }
     }
