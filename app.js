@@ -4,6 +4,7 @@ var ari = require('ari-client');
 var util = require('util');
 var sla = require('./lib/sla.js');
 var Q = require('q');
+var dal = require('./lib/dal.js');
 
 var connect = Q.denodeify(ari.connect);
 var confFile;
@@ -47,8 +48,11 @@ function clientLoaded (client) {
  * @return {boolean} - if the error is fatal or not
  */
 function isFatal(err) {
-  return !(err.name === 'InboundHungup' || err.name === 'DialedHungup' ||
-      err.name === 'HangupFailure' || err.name === 'NoStations');
+  return !(err.name === 'DialedHungup' || err.name === 'HangupFailure' ||
+      err.name === 'NoStations' || err.name === 'InboundHungup' ||
+      err.name === 'ExtensionBusy' || err.name === 'OutboundHungup' ||
+      err.name === 'StationsHungup' || err.name === 'EarlyOutboundHungup' ||
+      err.name === 'ExtensionOccupied');
 }
 
 /**
