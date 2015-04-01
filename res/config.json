@@ -7,10 +7,10 @@
             "42": {
               "stations": [
                 {
-                  "endpoint": "SIP/phone1"
+                  "endpoint": "SIP/100"
                 },
                 {
-                  "endpoint": "SIP/phone2"
+                  "endpoint": "SIP/96@cwolfe"
                 }
               ]
             }
