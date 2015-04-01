@@ -40,7 +40,7 @@ exten => 42,1,NoOp()
     same => n,Stasis(sla,42)                                                    
     same => n,Hangup()
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If an inbound caller were to be kicked out of this shared extension, they would be hungup, they could also make the dialplan call the application again to redirect a user to another shared extension like below:
+If an inbound caller were to be kicked out of this shared extension, they would be hungup. You could also make the dialplan call the application again to redirect a user to another shared extension like below:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 exten => 42,hint,Stasis:42
