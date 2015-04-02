@@ -479,8 +479,8 @@ describe('SLA Bridge and Channels Tester', function() {
       .catch(errHandler)
       .done();
 
-    invalidConfigurationFile();
-    function invalidConfigurationFile() {
+    cancelDialing();
+    function cancelDialing() {
       setTimeout(function() {
         if (isMixing && channels.length === 2 && bridges.length === 1 &&
           channel.inbound && channel.wasAnswered && dialed[0] &&
@@ -727,7 +727,7 @@ describe('SLA Bridge and Channels Tester', function() {
   });
 
   it('should test whether or not the application will fail when an incorrect' +
-      'extension is specified', function(done) {
+      ' extension is specified', function(done) {
     var client = getMockClient();
     var channel = getMockChannel();
     channel.name = 'SIP/phone1';
