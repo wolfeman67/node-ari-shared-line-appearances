@@ -46,11 +46,11 @@ If an inbound caller were to be kicked out of this shared extension, they would 
 exten => 42,hint,Stasis:42
 exten => 42,1,NoOp()                                                             
     same => n,Stasis(sla,42)
-    same => n,Goto(43,1)                                                 
+    same => n,Goto(420,1)                                                 
 
-exten => 43,hint,Stasis:43
-exten => 43,1,NoOp()
-    same => n,Stasis(sla,43)
+exten => 420,hint,Stasis:420
+exten => 420,1,NoOp()
+    same => n,Stasis(sla,420)
     same => n,Hangup()
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
