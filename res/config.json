@@ -6,7 +6,16 @@
           "42-A"
         ],
        "stations": [
-         "SIP/bobmarley",
+         "SIP/bobmarley"
+        ]
+      }
+    },
+    {
+      "420": {
+        "trunks": [
+          "42-A"
+        ],
+       "stations": [
          "SIP/100@tcambron"
         ]
       }
