@@ -163,14 +163,17 @@ var getMockBridge = function(param) {
   var Bridge = function(param) {
     this['bridge_type'] = param.type;
     this.name = param.name;
+
     if (this['bridge_type'] === 'mixing') {
       isMixing = true;
     }
+
     this.id = bridgeId.toString();
     bridgeId += 1;
     this.addChannel = function(input, cb) {
       var chanId = input.channel;
       var self = this;
+
       channels.forEach( function(testChan){
         if (testChan.id === input.channel) {
           bridgeChannels.push(testChan.id);
@@ -196,6 +199,7 @@ var getMockChannel = function() {
   var Channel = function() {
     this.id = channelId.toString();
     channelId += 1;
+
     this.originate = function(input, cb) {
       this.caller = {'number': '13578'};
       this.name = 'dialed' + this.id;
@@ -203,11 +207,13 @@ var getMockChannel = function() {
       if (channels[0].outbound) {
         this.nonStation = true;
       }
+
       dialed.push(this);
       var self = this;
       if (this.id % 2 === 0) {
         answeringDelay = answeringDelay * 2;
       }
+
       setTimeout(function() {
         if (validEndpoints.indexOf(input.endpoint) !== -1) {
           if (channels.indexOf(self) !== -1) {
@@ -220,10 +226,12 @@ var getMockChannel = function() {
         }
       }, answeringDelay);
     };
+
     this.hangup = function(cb) {
       var self = this;
       var channelFoundInBridges = false;
       this.wasHungup = true;
+
       setTimeout(function() {
         if (channels.length) {
           bridgeChannels = bridgeChannels.filter(function(channel) {
@@ -232,31 +240,38 @@ var getMockChannel = function() {
             }
             return channel !== self.id;  
           });
+
           if (channelFoundInBridges) {
             bridges[0].channels = bridgeChannels;
             bridges[0].emit('ChannelLeftBridge', {channel: self,
               bridge: bridges[0]}, {channel: self, bridge: bridges[0]});
           }
+
           channels = channels.filter(function(channel) {
             return channel !== self;
           });
+
           self.emit('ChannelHangupRequest', {channel: self}, self);
           self.emit('ChannelDestroyed', {channel: self}, self);
           cb(null);
         }
       }, (asyncDelay/2));
     };
+
     this.play = function(media, playbackObj) {
       return null;
     };
+
     this.answer = function(cb) {
       this.wasAnswered = true;
       cb(null);
     };
+
     this.continueInDialplan = function() {
       this.wasEvicted = true;
     };
   };
+
   util.inherits(Channel, Emitter);
   var mockChannel = new Channel();
   channels.push(mockChannel);
@@ -806,6 +821,7 @@ describe('SLA Bridge and Channels Tester', function() {
       }, asyncDelay);
     } 
   });
+
   it('should test whether or not an additional inbound caller gets kicked out' +
       ' when a call in progress', function(done) {
     var client = getMockClient();
@@ -874,11 +890,13 @@ describe('SLA Bridge and Channels Tester', function() {
           dialed[0].nonStation && dialed[0].wasHungup) {
           done();
         } else {
+
           if(toDial[index]) {
             channel.emit('ChannelDtmfReceived', {digit: toDial[index],
               channel: channel}, {channel: channel});
             index += 1;
           }
+
           if (secondChannel && channel && bridgeChannels.length === 3 &&
             !hangupRequested) {
               hangupRequested = true;
@@ -897,6 +915,7 @@ describe('SLA Bridge and Channels Tester', function() {
     channel.name = 'SIP/phone1';
     channel.caller = {'number': '1234'};
     channel.outbound = true;
+
     var secondChannel;
     var config = 'tests/testConfigs/multipleEndpoints.json';
 
@@ -928,11 +947,13 @@ describe('SLA Bridge and Channels Tester', function() {
           dialed[0].nonStation && !dialed[0].wasHungup) {
           done();
         } else {
+
           if(toDial[index]) {
             channel.emit('ChannelDtmfReceived', {digit: toDial[index],
               channel: channel}, {channel: channel});
             index += 1;
           }
+
           if (secondChannel && channel && bridgeChannels.length === 3 &&
             !hangupRequested) {
               hangupRequested = true;
@@ -981,11 +1002,13 @@ describe('SLA Bridge and Channels Tester', function() {
           dialed[0].nonStation && dialed[0].wasHungup) {
           done();
         } else {
+
           if(toDial[index]) {
             channel.emit('ChannelDtmfReceived', {digit: toDial[index],
               channel: channel}, {channel: channel});
             index += 1;
           }
+
           if (secondChannel && channel && bridgeChannels.length === 3 &&
             !hangupRequested) {
               hangupRequested = true;

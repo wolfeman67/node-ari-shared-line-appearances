@@ -10,6 +10,17 @@
          "SIP/100@tcambron"
         ]
       }
+    },
+    {
+      "420": {
+        "trunks": [
+          "42-A"
+        ],
+        "stations": [
+          "SIP/bobmarley",
+          "SIP/100@tcambron"
+        ]
+      }
     }
   ]
 }
