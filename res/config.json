@@ -3,11 +3,12 @@
     {
       "42": {
         "trunks": [
-          "42-A"
+          "42-A",
+          "42-B"
         ],
        "stations": [
-         "SIP/bobmarley",
-         "SIP/100@tcambron"
+         "SIP/bobmarley@cwolfe",
+         "SIP/100@cwolfe"
         ]
       }
     }
