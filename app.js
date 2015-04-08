@@ -4,11 +4,12 @@ var ari = require('ari-client');
 var util = require('util');
 var sla = require('./lib/sla.js');
 var Q = require('q');
+var dal = require('./lib/dal.js');
 
 var connect = Q.denodeify(ari.connect);
 var confFile;
 if (confFile = process.argv[2]) {
-  connect('http://127.0.0.1:8088', 'user', 'pass')
+  connect('http://localhost:8088', 'user', 'pass')
     .then(clientLoaded)
     .catch(errHandler)
     .done();
@@ -34,6 +35,7 @@ function clientLoaded (client) {
   client.on('StasisStart', function(event, channel) {
     if (!isDialed(event.args[0])) {
       var extension = event.args[0];
+      var confFile = process.argv[2];
       sla(client, confFile, channel, extension)
         .then(console.log)
         .catch(errHandler)
@@ -47,8 +49,11 @@ function clientLoaded (client) {
  * @return {boolean} - if the error is fatal or not
  */
 function isFatal(err) {
-  return !(err.name === 'InboundHungup' || err.name === 'DialedHungup' ||
-      err.name === 'HangupFailure' || err.name === 'NoStations');
+  return !(err.name === 'DialedHungup' || err.name === 'HangupFailure' ||
+      err.name === 'NoStations' || err.name === 'InboundHungup' ||
+      err.name === 'ExtensionBusy' || err.name === 'OutboundHungup' ||
+      err.name === 'StationsHungup' || err.name === 'EarlyOutboundHungup' ||
+      err.name === 'ExtensionOccupied');
 }
 
 /**
