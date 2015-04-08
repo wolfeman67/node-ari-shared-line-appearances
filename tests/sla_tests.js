@@ -964,6 +964,7 @@ describe('SLA Bridge and Channels Tester', function() {
       }, asyncDelay);
     } 
   });
+
   it('should hangup both station channels when the outside channel hangs up',
       function(done) {
     var client = getMockClient();
