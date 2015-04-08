@@ -4,6 +4,7 @@ var ari = require('ari-client');
 var sla = require('./lib/sla.js');
 var errHandler = require('./lib/errHandler.js');
 var Q = require('q');
+var dal = require('./lib/dal.js');
 
 var connect = Q.denodeify(ari.connect);
 var confFile;
@@ -34,6 +35,7 @@ function clientLoaded (client) {
   client.on('StasisStart', function(event, channel) {
     if (!isDialed(event.args[0])) {
       var extension = event.args[0];
+      var confFile = process.argv[2];
       sla(client, confFile, channel, extension)
         .then(console.log)
         .catch(errHandler)
