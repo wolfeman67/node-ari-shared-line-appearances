@@ -9,7 +9,7 @@ var dal = require('./lib/dal.js');
 var connect = Q.denodeify(ari.connect);
 var confFile;
 if (confFile = process.argv[2]) {
-  connect('http://127.0.0.1:8088', 'user', 'pass')
+  connect('http://localhost:8088', 'user', 'pass')
     .then(clientLoaded)
     .catch(errHandler)
     .done();
@@ -61,6 +61,7 @@ function isFatal(err) {
  * @param {Object} err - error from application.
  */
 function errHandler(err) {
+  console.log(err);
   if (!isFatal(err)) {
    console.log(err.message);
   } else {
