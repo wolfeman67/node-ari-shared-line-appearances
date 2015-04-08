@@ -40,6 +40,10 @@ var config = 'tests/testConfigs/singleEndpoint.json';
 var mockDeviceStates = [];
 // Device state object
 var ds = {};
+// Whether or not moh has started on the bridge
+var mohStarted = false;
+// Whether or not moh has stopped on the bridge
+var mohStopped = false;
 
 // The mocked up version of the callback error function
 // This is the default error handler; tests that deal with errors have their
@@ -76,7 +80,7 @@ var getMockClient = function() {
         cb(null, bridges[bridges.length-1]);
       }
     };
-    this.Channel= function() {
+    this.Channel = function() {
       var newChan = getMockChannel();
       return newChan;
     };
@@ -114,6 +118,9 @@ var getMockClient = function() {
               if (params.deviceState === 'RINGING') {
                 ds.hasRung = true;
                 ds.isIdle = false;
+              }
+              if (params.deviceState === 'ONHOLD') {
+                ds.onHold = true;
               }
               ds.deviceState = params.deviceState;
             }
@@ -163,14 +170,17 @@ var getMockBridge = function(param) {
   var Bridge = function(param) {
     this['bridge_type'] = param.type;
     this.name = param.name;
+
     if (this['bridge_type'] === 'mixing') {
       isMixing = true;
     }
+
     this.id = bridgeId.toString();
     bridgeId += 1;
     this.addChannel = function(input, cb) {
       var chanId = input.channel;
       var self = this;
+
       channels.forEach( function(testChan){
         if (testChan.id === input.channel) {
           bridgeChannels.push(testChan.id);
@@ -179,6 +189,17 @@ var getMockBridge = function(param) {
         }
       });
       cb(null);
+    };
+    this.channels = {
+      length: function() {
+        return bridgeChannels.length;
+      }
+    };
+    this.startMoh = function() {
+      mohStarted = true;
+    };
+    this.stopMoh = function() {
+      mohStopped = true;
     };
   };
   util.inherits(Bridge, Emitter);
@@ -196,6 +217,7 @@ var getMockChannel = function() {
   var Channel = function() {
     this.id = channelId.toString();
     channelId += 1;
+
     this.originate = function(input, cb) {
       this.caller = {'number': '13578'};
       this.name = 'dialed' + this.id;
@@ -208,6 +230,7 @@ var getMockChannel = function() {
       if (this.id % 2 === 0) {
         answeringDelay = answeringDelay * 2;
       }
+
       setTimeout(function() {
         if (validEndpoints.indexOf(input.endpoint) !== -1) {
           if (channels.indexOf(self) !== -1) {
@@ -220,10 +243,12 @@ var getMockChannel = function() {
         }
       }, answeringDelay);
     };
+
     this.hangup = function(cb) {
       var self = this;
       var channelFoundInBridges = false;
       this.wasHungup = true;
+
       setTimeout(function() {
         if (channels.length) {
           bridgeChannels = bridgeChannels.filter(function(channel) {
@@ -232,31 +257,38 @@ var getMockChannel = function() {
             }
             return channel !== self.id;  
           });
+
           if (channelFoundInBridges) {
             bridges[0].channels = bridgeChannels;
             bridges[0].emit('ChannelLeftBridge', {channel: self,
               bridge: bridges[0]}, {channel: self, bridge: bridges[0]});
           }
+
           channels = channels.filter(function(channel) {
             return channel !== self;
           });
+
           self.emit('ChannelHangupRequest', {channel: self}, self);
           self.emit('ChannelDestroyed', {channel: self}, self);
           cb(null);
         }
       }, (asyncDelay/2));
     };
+
     this.play = function(media, playbackObj) {
       return null;
     };
+
     this.answer = function(cb) {
       this.wasAnswered = true;
       cb(null);
     };
+
     this.continueInDialplan = function() {
       this.wasEvicted = true;
     };
   };
+
   util.inherits(Channel, Emitter);
   var mockChannel = new Channel();
   channels.push(mockChannel);
@@ -277,6 +309,8 @@ describe('SLA Bridge and Channels Tester', function() {
     dialed = [];
     config = 'tests/testConfigs/singleEndpoint.json';
     mockDeviceStates = [];
+    mohStarted = false;
+    mohStopped = false;
     ds = {};
     done();
   });
@@ -313,7 +347,7 @@ describe('SLA Bridge and Channels Tester', function() {
     var sla = require('../lib/sla.js')(client, config, channel, '42')
       .done();
 
-    bridges.push(getMockBridge({type: 'mixing', name: '42'}, function(){}));
+    bridges.push(getMockBridge({type: 'mixing', name: '42'}));
     bridgeChecking();
     function bridgeChecking() {
       setTimeout(function() {
@@ -341,7 +375,7 @@ describe('SLA Bridge and Channels Tester', function() {
       setTimeout(function() {
         if (dialed[0] && dialed[0].wasAnswered && bridgeChannels.length !== 0 &&
           isMixing && channel.wasAnswered) {
-          done();
+            done();
         } else {
           validChecking();
         }
@@ -366,7 +400,7 @@ describe('SLA Bridge and Channels Tester', function() {
       setTimeout(function() {
         if (dialed[0] && !dialed[0].wasAnswered &&
           bridgeChannels.length === 0 && isMixing && channel.wasAnswered) {
-          done();
+            done();
         } else {
           invalidChecking();
         }
@@ -412,6 +446,7 @@ describe('SLA Bridge and Channels Tester', function() {
     var sla = require('../lib/sla.js')(client, config, channel, '42')
       .catch(errHandler)
       .done();
+
     answeringDelay = 2 * asyncDelay;
     channel.hangup(function(){});
 
@@ -442,7 +477,6 @@ describe('SLA Bridge and Channels Tester', function() {
     var sla = require('../lib/sla.js')(client, config, channel, '42')
       .catch(errHandler)
       .done();
-    answeringDelay = 4 * asyncDelay;
 
     failToAnswer();
 
@@ -486,8 +520,8 @@ describe('SLA Bridge and Channels Tester', function() {
           channel.inbound && channel.wasAnswered && dialed[0] &&
           dialed[1]) {
             if ((dialed[0].wasHungup && dialed[1].wasAnswered) ||
-              (dialed[1].wasHungup && dialed[0].wasAnswered)) {
-                done();
+                (dialed[1].wasHungup && dialed[0].wasAnswered)) {
+                  done();
               }
           } else {
             cancelDialing();
@@ -503,11 +537,12 @@ describe('SLA Bridge and Channels Tester', function() {
     channel.name = 'SIP/phone3';
     channel.caller = {'number': '1234'};
     channel.inbound = true;
+
     config = 'tests/testConfigs/invalid.json';
 
     var sla = require('../lib/sla.js')(client, config, channel, '42')
       .catch(function (err) {
-        if(err.name === 'InvalidConfiguration') {
+        if (err.name === 'InvalidConfiguration') {
           done();
         }
       })
@@ -806,6 +841,7 @@ describe('SLA Bridge and Channels Tester', function() {
       }, asyncDelay);
     } 
   });
+
   it('should test whether or not an additional inbound caller gets kicked out' +
       ' when a call in progress', function(done) {
     var client = getMockClient();
@@ -836,8 +872,10 @@ describe('SLA Bridge and Channels Tester', function() {
     }, asyncDelay * 2);
   });
 
-  it('should test whether or not the application hangs up a non-station ' +
-      'channel when both station channels hang up', function(done) {
+  it('should test whether or not the application plays Music On Hold on a ' +
+     'non-station channel and sets the device state of the extension to ONHOLD'+
+     ' when both station channels either hang up or press Hold key',
+     function(done) {
     var client = getMockClient();
     var channel = getMockChannel();
     channel.name = 'SIP/phone1';
@@ -854,7 +892,7 @@ describe('SLA Bridge and Channels Tester', function() {
     var index = 0;
     var hangupRequested = false;
 
-    bothStationsHangup();
+    extensionHoldNominal();
     setTimeout(function () {
       secondChannel = getMockChannel();
       secondChannel.name = 'SIP/phone2';
@@ -865,38 +903,45 @@ describe('SLA Bridge and Channels Tester', function() {
       .done();
     }, asyncDelay * 7);
 
-    function bothStationsHangup() {
+    function extensionHoldNominal() {
       setTimeout(function() {
-        if (channels.length === 0 && bridgeChannels.length === 0 &&
+        if (channels.length === 1 && bridgeChannels.length === 1 &&
           channel.outbound && channel.wasAnswered && channel.wasHungup &&
           secondChannel.outbound && secondChannel.wasAnswered && 
-          secondChannel.wasHungup && dialed[0].wasAnswered &&
-          dialed[0].nonStation && dialed[0].wasHungup) {
+          secondChannel.held && dialed[0].wasAnswered &&
+          dialed[0].nonStation && !dialed[0].wasHungup && mohStarted &&
+          ds.deviceState === 'ONHOLD') {
           done();
         } else {
+
           if(toDial[index]) {
             channel.emit('ChannelDtmfReceived', {digit: toDial[index],
               channel: channel}, {channel: channel});
             index += 1;
           }
+
           if (secondChannel && channel && bridgeChannels.length === 3 &&
             !hangupRequested) {
               hangupRequested = true;
             channel.hangup(function (){});
-            secondChannel.hangup(function (){});
+            secondChannel.emit('ChannelHold', secondChannel, secondChannel);
+            secondChannel.held = true;
           }
-          bothStationsHangup();
+          extensionHoldNominal();
         }
       }, asyncDelay);
     } 
   });
+
   it('should test whether the application keeps the non-station channel with ' +
-      'a station, when only one station hangs up', function(done) {
+     'a station, when only one station hangs up or presses their hold key',
+     function(done) {
     var client = getMockClient();
     var channel = getMockChannel();
     channel.name = 'SIP/phone1';
     channel.caller = {'number': '1234'};
     channel.outbound = true;
+
     var secondChannel;
     var config = 'tests/testConfigs/multipleEndpoints.json';
 
@@ -907,7 +952,7 @@ describe('SLA Bridge and Channels Tester', function() {
     var index = 0;
     var hangupRequested = false;
 
-    oneStationHangsup();
+    oneStationHolds();
     setTimeout(function () {
       secondChannel = getMockChannel();
       secondChannel.name = 'SIP/phone2';
@@ -919,30 +964,33 @@ describe('SLA Bridge and Channels Tester', function() {
       .done();
     }, asyncDelay * 7);
 
-    function oneStationHangsup() {
+    function oneStationHolds() {
       setTimeout(function() {
         if (channels.length === 2 && bridgeChannels.length === 2 &&
           channel.outbound && channel.wasAnswered && channel.wasHungup &&
           secondChannel.outbound && secondChannel.wasAnswered && 
           !secondChannel.wasHungup && dialed[0].wasAnswered &&
-          dialed[0].nonStation && !dialed[0].wasHungup) {
+          dialed[0].nonStation && !mohStarted) {
           done();
         } else {
+
           if(toDial[index]) {
             channel.emit('ChannelDtmfReceived', {digit: toDial[index],
               channel: channel}, {channel: channel});
             index += 1;
           }
+
           if (secondChannel && channel && bridgeChannels.length === 3 &&
             !hangupRequested) {
               hangupRequested = true;
-            channel.hangup(function (){});
+            channel.emit('ChannelHold', channel, channel);
           }
-          oneStationHangsup();
+          oneStationHolds();
         }
       }, asyncDelay);
     } 
   });
+
   it('should hangup both station channels when the outside channel hangs up',
       function(done) {
     var client = getMockClient();
@@ -981,11 +1029,13 @@ describe('SLA Bridge and Channels Tester', function() {
           dialed[0].nonStation && dialed[0].wasHungup) {
           done();
         } else {
+
           if(toDial[index]) {
             channel.emit('ChannelDtmfReceived', {digit: toDial[index],
               channel: channel}, {channel: channel});
             index += 1;
           }
+
           if (secondChannel && channel && bridgeChannels.length === 3 &&
             !hangupRequested) {
               hangupRequested = true;
@@ -994,6 +1044,52 @@ describe('SLA Bridge and Channels Tester', function() {
           nonStationHangsup();
         }
       }, asyncDelay);
-    } 
+    }
+  });
+
+  it('test whether or not a station channel can join the extension after it ' +
+     'has been on hold',
+      function(done) {
+    var client = getMockClient();
+    var channel = getMockChannel();
+    var stationReturns;
+    channel.name = 'SIP/phone3';
+    channel.caller = {'number': '1234'};
+    channel.inbound = true;
+
+    var sla = require('../lib/sla.js')(client, config, channel, '42')
+      .catch(errHandler)
+      .done();
+
+    extensionUnhold();
+
+    function extensionUnhold() {
+      setTimeout(function() {
+        if (channels.length === 2 && bridgeChannels.length === 2 &&
+          channel.inbound && channel.wasAnswered && !channel.wasHungup &&
+          dialed[0].wasAnswered && !dialed[0].nonStation &&
+          dialed[0].wasHungup && stationReturns.wasAnswered &&
+          !stationReturns.wasHungup && mohStarted && mohStopped &&
+          ds.deviceState === 'INUSE'){
+          done();
+        } else {
+          if (bridgeChannels.length === 2 && !dialed[0].held) {
+            dialed[0].name = 'SIP/phone1';
+            dialed[0].emit('ChannelHold', dialed[0], dialed[0]);
+            stationReturns = getMockChannel();
+            stationReturns.name = 'SIP/phone1';
+            stationReturns.caller = {'number': '5678'};
+            stationReturns.outbound = true;
+            setTimeout(function() {
+              var sla2 = require('../lib/sla.js')(client, config,
+                stationReturns, '42')
+              .catch(errHandler)
+              .done();
+            }, asyncDelay);
+          }
+          extensionUnhold();
+        }
+      }, asyncDelay);
+    }
   });
 });

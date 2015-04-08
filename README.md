@@ -53,5 +53,6 @@ exten => 420,1,NoOp()
     same => n,Stasis(sla,420)
     same => n,Hangup()
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ARI patch for detecting channel hold events is also required (may be in the Asterisk 13 branch by the time we are finished). 
 
 The application is invoked using node app.js [configurationFilePathAndFileName]

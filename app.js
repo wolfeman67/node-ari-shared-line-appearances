@@ -61,7 +61,6 @@ function isFatal(err) {
  * @param {Object} err - error from application.
  */
 function errHandler(err) {
-  console.log(err);
   if (!isFatal(err)) {
    console.log(err.message);
   } else {
