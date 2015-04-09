@@ -6,9 +6,9 @@
           "42-A",
           "42-B"
         ],
-       "stations": [
-         "SIP/tcam",
-         "SIP/100"
+        "stations": [
+          "SIP/phone1",
+          "SIP/phone2"
         ]
       }
     }

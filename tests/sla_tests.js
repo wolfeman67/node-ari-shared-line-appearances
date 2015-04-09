@@ -806,6 +806,7 @@ describe('SLA Bridge and Channels Tester', function() {
       }, asyncDelay);
     } 
   });
+
   it('should test whether or not an additional inbound caller gets kicked out' +
       ' when a call in progress', function(done) {
     var client = getMockClient();
@@ -890,6 +891,7 @@ describe('SLA Bridge and Channels Tester', function() {
       }, asyncDelay);
     } 
   });
+
   it('should test whether the application keeps the non-station channel with ' +
       'a station, when only one station hangs up', function(done) {
     var client = getMockClient();
@@ -943,6 +945,7 @@ describe('SLA Bridge and Channels Tester', function() {
       }, asyncDelay);
     } 
   });
+
   it('should hangup both station channels when the outside channel hangs up',
       function(done) {
     var client = getMockClient();
@@ -992,6 +995,97 @@ describe('SLA Bridge and Channels Tester', function() {
             dialed[0].hangup(function() {});
           }
           nonStationHangsup();
+        }
+      }, asyncDelay);
+    } 
+  });
+
+  it('should attempt to outbound dial through all available trunks',
+      function(done) {
+    var client = getMockClient();
+    var channel = getMockChannel();
+    channel.name = 'SIP/phone1';
+    channel.caller = {'number': '1234'};
+    channel.outbound = true;
+
+    var config = 'tests/testConfigs/multipleTrunks.json';
+
+    var sla = require('../lib/sla.js')(client, config, channel, '42')
+      .catch(errHandler)
+      .done();
+    var toDial =['1','0','0','#'];
+    var index = 0;
+    var hangupRequested = false;
+
+    dialMultipleTrunks();
+
+    function dialMultipleTrunks() {
+      //console.log(dialed);
+      setTimeout(function() {
+        if (bridgeChannels.length === 2 && channel.outbound &&
+          dialed[0] && dialed[0].nonStation && dialed[1] &&
+          dialed[1].nonStation) {
+          done();
+        } else {
+          if(toDial[index]) {
+            channel.emit('ChannelDtmfReceived', {digit: toDial[index],
+              channel: channel}, {channel: channel});
+            index += 1;
+          }
+          if (channel && bridgeChannels.length === 2 &&
+            !hangupRequested) {
+              hangupRequested = true;
+            dialed[0].hangup(function() {});
+            dialed[1].hangup(function() {});
+          }
+          dialMultipleTrunks();
+        }
+      }, asyncDelay);
+    } 
+  });
+
+  it('should hangup a trunk if the other trunk answers the call',
+      function(done) {
+    var client = getMockClient();
+    var channel = getMockChannel();
+    channel.name = 'SIP/phone1';
+    channel.caller = {'number': '1234'};
+    channel.outbound = true;
+
+    var config = 'tests/testConfigs/multipleTrunks.json';
+
+    var sla = require('../lib/sla.js')(client, config, channel, '42')
+      .catch(errHandler)
+      .done();
+    var toDial =['1','0','0','#'];
+    var index = 0;
+    var hangupRequested = false;
+
+    dialMultipleTrunks();
+
+    function dialMultipleTrunks() {
+      //console.log(dialed);
+      setTimeout(function() {
+        if (bridgeChannels.length === 2 && channel.outbound &&
+          dialed[0] && dialed[0].nonStation && dialed[1] &&
+          dialed[1].nonStation) {
+            if ((dialed[0].wasAnswered && dialed[1].wasHungup) ||
+                (dialed[1].wasAnswered && dialed[0].wasHungup)) {
+              done();
+            }
+        } else {
+          if(toDial[index]) {
+            channel.emit('ChannelDtmfReceived', {digit: toDial[index],
+              channel: channel}, {channel: channel});
+            index += 1;
+          }
+          if (channel && bridgeChannels.length === 2 &&
+            !hangupRequested) {
+              hangupRequested = true;
+            dialed[0].hangup(function() {});
+            dialed[1].hangup(function() {});
+          }
+          dialMultipleTrunks();
         }
       }, asyncDelay);
     } 
