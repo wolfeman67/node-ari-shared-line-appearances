@@ -909,6 +909,7 @@ describe('SLA Bridge and Channels Tester', function() {
       }, asyncDelay);
     } 
   });
+
   it('should test whether the application keeps the non-station channel with ' +
       'a station, when only one station hangs up', function(done) {
     var client = getMockClient();
