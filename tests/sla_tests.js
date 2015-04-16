@@ -100,7 +100,7 @@ var getMockClient = function() {
           return deviceState.deviceName === params.deviceName;
         });
         if (!exists) {
-          ds = {deviceName: params.deviceName, 
+          ds = {deviceName: params.deviceName,
             deviceState: params.deviceState, hasBeenInUse: false};
           if (ds.deviceState === 'NOT_INUSE') {
             ds.isIdle = true;
@@ -147,7 +147,7 @@ var getMockClient = function() {
           cb(null, currentState);
         }
       }
-      
+
     };
 
     this.Playback = function() {
@@ -162,7 +162,7 @@ var getMockClient = function() {
 
 /**
  * Returns a mock bridge that has a bridge_type and id, and can add channels
- * to its array of channels. Emits a ChannelEnteredBridge event for every 
+ * to its array of channels. Emits a ChannelEnteredBridge event for every
  * channel that enters it.
  */
 
@@ -255,7 +255,7 @@ var getMockChannel = function() {
             if (channel === self.id) {
               channelFoundInBridges = true;
             }
-            return channel !== self.id;  
+            return channel !== self.id;
           });
 
           if (channelFoundInBridges) {
@@ -335,7 +335,7 @@ describe('SLA Bridge and Channels Tester', function() {
           bridgeChecking();
         }
       }, asyncDelay);
-    } 
+    }
   });
 
   it('should use a preexisting bridge if there is one', function(done) {
@@ -357,7 +357,7 @@ describe('SLA Bridge and Channels Tester', function() {
           bridgeChecking();
         }
       }, asyncDelay);
-    } 
+    }
   });
 
   it('should use a "valid" endpoint and give off a StasisStart event ' +
@@ -380,7 +380,7 @@ describe('SLA Bridge and Channels Tester', function() {
           validChecking();
         }
       }, asyncDelay);
-    } 
+    }
   });
 
   it('should dial an "invalid" endpoint and not give off a StasisStart event',
@@ -405,7 +405,7 @@ describe('SLA Bridge and Channels Tester', function() {
           invalidChecking();
         }
       }, asyncDelay);
-    } 
+    }
   });
 
   it('should enter the application but specify an invalid SLA bridge. The ' +
@@ -431,10 +431,10 @@ describe('SLA Bridge and Channels Tester', function() {
           incorrectBridge();
         }
       }, asyncDelay);
-    } 
+    }
   });
 
-  it('should enter the application, call the dialed channel, but hang up ' + 
+  it('should enter the application, call the dialed channel, but hang up ' +
       'before it answers (which in turn hangs up inbound caller)',
      function(done) {
     var client = getMockClient();
@@ -461,7 +461,7 @@ describe('SLA Bridge and Channels Tester', function() {
           earlyHangup();
         }
       }, asyncDelay);
-    } 
+    }
   });
 
   it('should hangup inbound channel if all dialed channles fail to answer',
@@ -489,7 +489,7 @@ describe('SLA Bridge and Channels Tester', function() {
       setTimeout(function() {
         if (isMixing && channels.length === 0 && bridges.length === 1 &&
           channel.inbound && channel.wasAnswered && dialed[0] &&
-          dialed[1] && dialed[0].wasHungup && dialed[1].wasHungup && 
+          dialed[1] && dialed[0].wasHungup && dialed[1].wasHungup &&
           channel.wasHungup) {
                 done();
           } else {
@@ -527,7 +527,7 @@ describe('SLA Bridge and Channels Tester', function() {
             cancelDialing();
           }
       }, asyncDelay);
-    } 
+    }
   });
 
   it('should give the application an invalid configuration file and promptly ' +
@@ -633,7 +633,7 @@ describe('SLA Bridge and Channels Tester', function() {
             markAsRinging();
           }
       }, asyncDelay);
-    } 
+    }
   });
 
   it('should mark a device as NOT_INUSE when no outbound channels answer',
@@ -674,7 +674,7 @@ describe('SLA Bridge and Channels Tester', function() {
             markAsRinging();
           }
       }, asyncDelay);
-    } 
+    }
   });
 
   it('should not mark a device INUSE when a trunk enters the shared extension',
@@ -709,7 +709,7 @@ describe('SLA Bridge and Channels Tester', function() {
         }
       }, asyncDelay);
     }
-  }); 
+  });
 
   it('should test the configuration when there are no trunks to use and ' +
       'fail out', function(done) {
@@ -758,7 +758,7 @@ describe('SLA Bridge and Channels Tester', function() {
           outboundNominal();
         }
       }, asyncDelay);
-    } 
+    }
   });
 
   it('should test whether or not the application will fail when an incorrect' +
@@ -791,7 +791,7 @@ describe('SLA Bridge and Channels Tester', function() {
           outboundBadExtension();
         }
       }, asyncDelay);
-    } 
+    }
   });
 
   it('should test whether or not an additional station can join in a call' +
@@ -839,7 +839,7 @@ describe('SLA Bridge and Channels Tester', function() {
           secondStationJoinsBridge();
         }
       }, asyncDelay);
-    } 
+    }
   });
 
   it('should test whether or not an additional inbound caller gets kicked out' +
@@ -872,9 +872,8 @@ describe('SLA Bridge and Channels Tester', function() {
     }, asyncDelay * 2);
   });
 
-  it('should test whether or not the application plays Music On Hold on a ' +
-     'non-station channel and sets the device state of the extension to ONHOLD'+
-     ' when both station channels either hang up or press Hold key',
+  it('should test whether or not the application hangs up the ' +
+     'non-station channel when both station channels either hang up',
      function(done) {
     var client = getMockClient();
     var channel = getMockChannel();
@@ -907,10 +906,9 @@ describe('SLA Bridge and Channels Tester', function() {
       setTimeout(function() {
         if (channels.length === 1 && bridgeChannels.length === 1 &&
           channel.outbound && channel.wasAnswered && channel.wasHungup &&
-          secondChannel.outbound && secondChannel.wasAnswered && 
-          secondChannel.held && dialed[0].wasAnswered &&
-          dialed[0].nonStation && !dialed[0].wasHungup && mohStarted &&
-          ds.deviceState === 'ONHOLD') {
+          secondChannel.outbound && secondChannel.wasAnswered &&
+          secondChannel.wasHungup && dialed[0].wasAnswered &&
+          dialed[0].nonStation && dialed[0].wasHungup) {
           done();
         } else {
 
@@ -930,7 +928,7 @@ describe('SLA Bridge and Channels Tester', function() {
           extensionHoldNominal();
         }
       }, asyncDelay);
-    } 
+    }
   });
 
   it('should test whether the application keeps the non-station channel with ' +
@@ -968,7 +966,7 @@ describe('SLA Bridge and Channels Tester', function() {
       setTimeout(function() {
         if (channels.length === 2 && bridgeChannels.length === 2 &&
           channel.outbound && channel.wasAnswered && channel.wasHungup &&
-          secondChannel.outbound && secondChannel.wasAnswered && 
+          secondChannel.outbound && secondChannel.wasAnswered &&
           !secondChannel.wasHungup && dialed[0].wasAnswered &&
           dialed[0].nonStation && !mohStarted) {
           done();
@@ -988,7 +986,7 @@ describe('SLA Bridge and Channels Tester', function() {
           oneStationHolds();
         }
       }, asyncDelay);
-    } 
+    }
   });
 
   it('should hangup both station channels when the outside channel hangs up',
@@ -1024,7 +1022,7 @@ describe('SLA Bridge and Channels Tester', function() {
       setTimeout(function() {
         if (channels.length === 0 && bridgeChannels.length === 0 &&
           channel.outbound && channel.wasAnswered && channel.wasHungup &&
-          secondChannel.outbound && secondChannel.wasAnswered && 
+          secondChannel.outbound && secondChannel.wasAnswered &&
           secondChannel.wasHungup && dialed[0].wasAnswered &&
           dialed[0].nonStation && dialed[0].wasHungup) {
           done();
