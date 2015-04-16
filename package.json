@@ -25,7 +25,9 @@
   ],
   "dependencies": {
     "ari-client": "^0.1.6",
-    "lodash": "^3.6.0"
+    "ip": "^0.3.2",
+    "lodash": "^3.6.0",
+    "node-regexp": "^0.1.1"
   },
   "license": "Apache-2",
   "devDependencies": {
