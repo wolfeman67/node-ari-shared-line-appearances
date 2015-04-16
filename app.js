@@ -1,10 +1,9 @@
 'use strict';
 
 var ari = require('ari-client');
-var util = require('util');
 var sla = require('./lib/sla.js');
+var errHandler = require('./lib/errHandler.js');
 var Q = require('q');
-var dal = require('./lib/dal.js');
 
 var connect = Q.denodeify(ari.connect);
 var confFile;
@@ -27,7 +26,7 @@ function isDialed(argument) {
 
 /**
  * Waits for a StasisStart event before going into the main SLA module
- * @param {Object} client - Object that contains information from the ARI 
+ * @param {Object} client - Object that contains information from the ARI
  *   connection.
  */
 function clientLoaded (client) {
@@ -42,28 +41,4 @@ function clientLoaded (client) {
         .done();
     }
   });
-}
-
-/** Utility function for seeing if an error is fatal (crashes the program)
- * @param {Object} err - the error in question.
- * @return {boolean} - if the error is fatal or not
- */
-function isFatal(err) {
-  return !(err.name === 'DialedHungup' || err.name === 'HangupFailure' ||
-      err.name === 'NoStations' || err.name === 'InboundHungup' ||
-      err.name === 'ExtensionBusy' || err.name === 'OutboundHungup' ||
-      err.name === 'StationsHungup' || err.name === 'EarlyOutboundHungup' ||
-      err.name === 'ExtensionOccupied');
-}
-
-/**
- * Handles errors found in application.
- * @param {Object} err - error from application.
- */
-function errHandler(err) {
-  if (!isFatal(err)) {
-   console.log(err.message);
-  } else {
-   throw err;
-  } 
 }
