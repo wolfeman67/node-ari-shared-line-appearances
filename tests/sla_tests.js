@@ -1065,27 +1065,34 @@ describe('SLA Bridge and Channels Tester', function() {
 
     function extensionUnhold() {
       setTimeout(function() {
+
         if (channels.length === 2 && bridgeChannels.length === 2 &&
           channel.inbound && channel.wasAnswered && !channel.wasHungup &&
           dialed[0].wasAnswered && !dialed[0].nonStation &&
           dialed[0].wasHungup && stationReturns.wasAnswered &&
           !stationReturns.wasHungup && mohStarted && mohStopped &&
           ds.deviceState === 'INUSE'){
+
           done();
         } else {
+
           if (bridgeChannels.length === 2 && !dialed[0].held) {
+
             dialed[0].name = 'SIP/phone1';
             dialed[0].emit('ChannelHold', dialed[0], dialed[0]);
+
             stationReturns = getMockChannel();
             stationReturns.name = 'SIP/phone1';
             stationReturns.caller = {'number': '5678'};
             stationReturns.outbound = true;
+
             setTimeout(function() {
               var sla2 = require('../lib/sla.js')(client, config,
                 stationReturns, '42')
               .catch(errHandler)
               .done();
             }, asyncDelay);
+
           }
           extensionUnhold();
         }

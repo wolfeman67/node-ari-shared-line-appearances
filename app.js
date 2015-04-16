@@ -9,7 +9,7 @@ var dal = require('./lib/dal.js');
 var connect = Q.denodeify(ari.connect);
 var confFile;
 if (confFile = process.argv[2]) {
-  connect('http://localhost:8088', 'user', 'pass')
+  connect('http://127.0.0.1:8088', 'user', 'pass')
     .then(clientLoaded)
     .catch(errHandler)
     .done();
@@ -35,7 +35,6 @@ function clientLoaded (client) {
   client.on('StasisStart', function(event, channel) {
     if (!isDialed(event.args[0])) {
       var extension = event.args[0];
-      var confFile = process.argv[2];
       sla(client, confFile, channel, extension)
         .then(console.log)
         .catch(errHandler)
