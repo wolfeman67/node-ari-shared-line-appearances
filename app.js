@@ -1,10 +1,8 @@
 'use strict';
 
 var ari = require('ari-client');
-var util = require('util');
 var sla = require('./lib/sla.js');
 var Q = require('q');
-var dal = require('./lib/dal.js');
 
 var connect = Q.denodeify(ari.connect);
 var confFile;
@@ -27,7 +25,7 @@ function isDialed(argument) {
 
 /**
  * Waits for a StasisStart event before going into the main SLA module
- * @param {Object} client - Object that contains information from the ARI 
+ * @param {Object} client - Object that contains information from the ARI
  *   connection.
  */
 function clientLoaded (client) {
@@ -65,5 +63,5 @@ function errHandler(err) {
    console.log(err.message);
   } else {
    throw err;
-  } 
+  }
 }
