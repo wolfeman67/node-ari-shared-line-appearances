@@ -8,23 +8,23 @@ You must also have a valid ARI user in ari.conf named "user" and have a password
 It is also required that you have a valid configuration JSON file and a valid sharedExtension object inside of it (which contains a list of valid trunks and a list of valid station endpoints).  An example of this would be:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-{                                                                                
-  "sharedExtensions": [                                                          
-    {                                                                              
-      "42": {                                                             
-        "trunks": [                                                                
+{
+  "sharedExtensions": [
+    {
+      "42": {
+        "trunks": [
           "42-A"
-        ]                                                                      
-        "stations": [                                                        
+        ]
+        "stations": [
           "SIP/phone1",
-          "SIP/phone2"                                            
-        ]                                                                
-      }                                                                            
-    }                                                                              
-  ]                                                                              
+          "SIP/phone2"
+        ]
+      }
+    }
+  ]
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Right now, however, this application only supports one trunk per sharedExtension, it can have any name, however, but the SIP trunk must appear in sip.conf, like below: 
+Right now, however, this application only supports one trunk per sharedExtension, it can have any name, however, but the SIP trunk must appear in sip.conf, like below:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 [42-A]
 type = peer
@@ -36,17 +36,17 @@ You must also have a dialplan extension in extensions.conf that leads to the app
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 exten => 42,hint,Stasis:42
-exten => 42,1,NoOp()                                                             
-    same => n,Stasis(sla,42)                                                    
+exten => 42,1,NoOp()
+    same => n,Stasis(sla,42)
     same => n,Hangup()
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If an inbound caller were to be kicked out of this shared extension, they would be hungup. You could also make the dialplan call the application again to redirect a user to another shared extension like below:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 exten => 42,hint,Stasis:42
-exten => 42,1,NoOp()                                                             
+exten => 42,1,NoOp()
     same => n,Stasis(sla,42)
-    same => n,Goto(43,1)                                                 
+    same => n,Goto(43,1)
 
 exten => 43,hint,Stasis:43
 exten => 43,1,NoOp()
