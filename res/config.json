@@ -6,9 +6,9 @@
         "trunks": [
           "42-A"
         ],
-       "stations": [
-         "SIP/bobmarley",
-         "SIP/kingcrimson"
+        "stations": [
+          "SIP/bobmarley",
+          "SIP/kingcrimson"
         ]
       }
     },
@@ -17,8 +17,8 @@
         "trunks": [
           "42-A"
         ],
-       "stations": [
-         "SIP/100@tcambron"
+        "stations": [
+          "SIP/100@tcambron"
         ]
       }
     }
