@@ -3,6 +3,11 @@
 var ari = require('ari-client');
 var sla = require('./lib/sla.js');
 var Q = require('q');
+var _ = require('lodash');
+
+var nonFatal = ['DialedHungup', 'HangupFailure', 'NoStations', 'InboundHungup',
+      'ExtensionBusy', 'OutboundHungup', 'StationsHungup',
+      'EarlyOutboundHungup', 'ExtensionOccupied'];
 
 var connect = Q.denodeify(ari.connect);
 var confFile;
@@ -46,12 +51,8 @@ function clientLoaded (client) {
  * @param {Object} err - the error in question.
  * @return {boolean} - if the error is fatal or not
  */
-function isFatal(err) {
-  return !(err.name === 'DialedHungup' || err.name === 'HangupFailure' ||
-      err.name === 'NoStations' || err.name === 'InboundHungup' ||
-      err.name === 'ExtensionBusy' || err.name === 'OutboundHungup' ||
-      err.name === 'StationsHungup' || err.name === 'EarlyOutboundHungup' ||
-      err.name === 'ExtensionOccupied');
+function notFatal(err) {
+  return _.includes(nonFatal, err.name);
 }
 
 /**
@@ -59,9 +60,9 @@ function isFatal(err) {
  * @param {Object} err - error from application.
  */
 function errHandler(err) {
-  if (!isFatal(err)) {
-   console.log(err.message);
+  if (notFatal(err)) {
+    console.log(err.message);
   } else {
-   throw err;
+    throw err;
   }
 }
