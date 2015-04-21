@@ -5,9 +5,9 @@ var sla = require('./lib/sla.js');
 var Q = require('q');
 var _ = require('lodash');
 
-var nonFatal = ['DialedHungup', 'HangupFailure', 'NoStations', 'InboundHungup',
-      'ExtensionBusy', 'OutboundHungup', 'StationsHungup',
-      'EarlyOutboundHungup', 'ExtensionOccupied'];
+var NON_FATAL = ['DialedHungup', 'HangupFailure', 'NoStations', 'InboundHungup',
+                 'ExtensionBusy', 'OutboundHungup', 'StationsHungup',
+                 'EarlyOutboundHungup', 'ExtensionOccupied'];
 
 var connect = Q.denodeify(ari.connect);
 var confFile;
@@ -52,7 +52,7 @@ function clientLoaded (client) {
  * @return {boolean} - if the error is fatal or not
  */
 function notFatal(err) {
-  return _.includes(nonFatal, err.name);
+  return _.includes(NON_FATAL, err.name);
 }
 
 /**
