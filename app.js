@@ -24,7 +24,6 @@ if (confFile = process.argv[2]) {
 function clientLoaded (client) {
   client.start('sla');
   client.on('StasisStart', function(event, channel) {
-    console.log(event.args[0])
     if (event.args[0] !== 'dialed') {
       var extension = event.args[0];
       sla(client, confFile, channel, extension)
