@@ -13,5 +13,5 @@
   "node": true,
   "quotmark": true,
   "camelcase": true,
-  "maxlen": true
+  "maxlen": 80
 }
