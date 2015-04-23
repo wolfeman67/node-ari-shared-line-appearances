@@ -1,8 +1,8 @@
 'use strict';
 
 var ari = require('ari-client');
-var util = require('util');
 var sla = require('./lib/sla.js');
+var errHandler = require('./lib/errHandler.js');
 var Q = require('q');
 
 var connect = Q.denodeify(ari.connect);
@@ -17,22 +17,15 @@ if (confFile = process.argv[2]) {
 }
 
 /**
- * Checks if the argument tied to the StasisStart event is dialed (not inbound)
- * @param {String} argument - The argument (either an extension # or dialed)
- */
-function isDialed(argument) {
-  return argument === 'dialed';
-}
-
-/**
  * Waits for a StasisStart event before going into the main SLA module
- * @param {Object} client - Object that contains information from the ARI 
+ * @param {Object} client - Object that contains information from the ARI
  *   connection.
  */
 function clientLoaded (client) {
   client.start('sla');
   client.on('StasisStart', function(event, channel) {
-    if (!isDialed(event.args[0])) {
+    console.log(event.args[0])
+    if (event.args[0] !== 'dialed') {
       var extension = event.args[0];
       sla(client, confFile, channel, extension)
         .then(console.log)
@@ -40,25 +33,4 @@ function clientLoaded (client) {
         .done();
     }
   });
-}
-
-/** Utility function for seeing if an error is fatal (crashes the program)
- * @param {Object} err - the error in question.
- * @return {boolean} - if the error is fatal or not
- */
-function isFatal(err) {
-  return !(err.name === 'InboundHungup' || err.name === 'DialedHungup' ||
-      err.name === 'HangupFailure' || err.name === 'NoStations');
-}
-
-/**
- * Handles errors found in application.
- * @param {Object} err - error from application.
- */
-function errHandler(err) {
-  if (!isFatal(err)) {
-   console.log(err.message);
-  } else {
-   throw err;
-  } 
 }
