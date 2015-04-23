@@ -7,7 +7,7 @@ You must also have a valid ARI user in ari.conf named "user" and have a password
 You must have 127.0.0.1 (or localhost) configured as the bindaddr in http.conf
 You must have 8088 configured as the bindport in http.conf
 
-You must have a valid configuration JSON file and a valid sharedExtension object inside of it (which contains a list of valid trunks and a list of valid station endpoints).  An example of this would be:
+You must have a valid configuration JSON file and a valid sharedExtension object inside of it (which contains a list of valid trunks and a list of valid station endpoints). An example of this would be:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 {
