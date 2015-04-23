@@ -88,8 +88,7 @@ var getMockClient = function() {
           }
         });
         cb(null);
-      },
-      length: channels.length
+      }
     };
     this.deviceStates = {
       update: function(params, cb) {
@@ -184,7 +183,6 @@ var getMockBridge = function(param) {
       });
       cb(null);
     };
-    this.channels = bridgeChannels;
   };
   util.inherits(Bridge, Emitter);
   var mockBridge = new Bridge(param);
