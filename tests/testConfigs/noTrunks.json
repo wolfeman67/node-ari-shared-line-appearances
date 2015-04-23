@@ -4,11 +4,9 @@
       "42": {
         "timeout": "10",
         "trunks": [
-          "42-A"
         ],
         "stations": [
-          "SIP/phone1",
-          "SIP/phone2"
+          "SIP/phone1"
         ]
       }
     }

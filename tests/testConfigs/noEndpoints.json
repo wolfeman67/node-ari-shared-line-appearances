@@ -2,13 +2,11 @@
   "sharedExtensions": [
     {
       "42": {
+        "timeout": "10",
         "trunks": [
-          {
-            "42": {
-              "stations": [
-              ]
-            }
-          }
+          "42-A"
+        ],
+        "stations": [
         ]
       }
     }
