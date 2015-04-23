@@ -10,7 +10,7 @@ You must have 8088 configured as the bindport in http.conf
 You must have a valid configuration JSON file and a valid sharedExtension object inside of it (which contains a list of valid trunks and a list of valid station endpoints).  An example of this would be:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-{ 
+{
   "sharedExtensions": [
     {
       "42": {
@@ -35,9 +35,9 @@ host = 0.0.0.0
 username = 42-A
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You must also have a dialplan extension in extensions.conf that leads to the application 
+You must also have a dialplan extension in extensions.conf that leads to the application
 This extension must have a Stasis function that has the same name as what application is being started in the code.
-This extension must also have an argument to represent the SLA bridge to reach.  
+This extension must also have an argument to represent the SLA bridge to reach.
 An example with a device state hint is below:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

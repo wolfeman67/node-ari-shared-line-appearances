@@ -34,7 +34,6 @@ function clientLoaded (client) {
   client.on('StasisStart', function(event, channel) {
     if (!isDialed(event.args[0])) {
       var extension = event.args[0];
-      var confFile = process.argv[2];
       sla(client, confFile, channel, extension)
         .then(console.log)
         .catch(errHandler)
