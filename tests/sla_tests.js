@@ -88,7 +88,8 @@ var getMockClient = function() {
           }
         });
         cb(null);
-      }
+      },
+      length: channels.length
     };
     this.deviceStates = {
       update: function(params, cb) {
@@ -183,6 +184,7 @@ var getMockBridge = function(param) {
       });
       cb(null);
     };
+    this.channels = bridgeChannels;
   };
   util.inherits(Bridge, Emitter);
   var mockBridge = new Bridge(param);
@@ -909,7 +911,6 @@ describe('SLA Bridge and Channels Tester', function() {
       }, asyncDelay);
     }
   });
-
   it('should test whether the application keeps the non-station channel with ' +
       'a station, when only one station hangs up', function(done) {
     var client = getMockClient();
@@ -1018,6 +1019,224 @@ describe('SLA Bridge and Channels Tester', function() {
             dialed[0].hangup(function() {});
           }
           nonStationHangsup();
+        }
+      }, asyncDelay);
+    }
+  });
+
+  it('should test the configuration when there are no trunks to use and ' +
+      'fail out', function(done) {
+    var client = getMockClient();
+
+    var channel = getMockChannel();
+    channel.name = 'SIP/phone1';
+    channel.caller = {'number': '1234'};
+    channel.outbound = true;
+
+    config = 'tests/testConfigs/noTrunks.json';
+    var sla = require('../lib/sla.js')(client, config, channel, '42')
+      .catch(function (err) {
+        if (err.name === 'NoTrunks') {
+          done();
+        }
+      })
+      .done();
+  });
+
+  it('should test whether or not outbound dialing works nominally',
+      function(done) {
+    var client = getMockClient();
+    var channel = getMockChannel();
+    channel.name = 'SIP/phone1';
+    channel.caller = {'number': '1234'};
+    channel.outbound = true;
+
+    var sla = require('../lib/sla.js')(client, config, channel, '42')
+      .catch(errHandler)
+      .done();
+    var toDial =['1','0','0','#'];
+    var index = 0;
+
+    outboundNominal();
+    function outboundNominal() {
+      setTimeout(function() {
+        if (channels.length === 2 && bridgeChannels.length === 2 &&
+          channel.outbound && channel.wasAnswered && dialed[0].wasAnswered &&
+          dialed[0].nonStation) {
+          done();
+        } else {
+          channel.emit('ChannelDtmfReceived', {digit: toDial[index],
+            channel: channel}, {channel: channel});
+          index += 1;
+          outboundNominal();
+        }
+      }, asyncDelay);
+    }
+  });
+
+  it('should test whether or not the application will fail when an incorrect' +
+      ' extension is specified', function(done) {
+    var client = getMockClient();
+    var channel = getMockChannel();
+    channel.name = 'SIP/phone1';
+    channel.caller = {'number': '1234'};
+    channel.outbound = true;
+
+    var sla = require('../lib/sla.js')(client, config, channel, '42')
+      .catch(errHandler)
+      .done();
+    var toDial =['2','0','0','#'];
+    var index = 0;
+
+    outboundBadExtension();
+    function outboundBadExtension() {
+      setTimeout(function() {
+        if (channels.length === 0 && bridgeChannels.length === 0 &&
+          channel.outbound && channel.wasAnswered && !dialed[0].wasAnswered &&
+          dialed[0].nonStation && dialed[0].wasHungup && channel.wasHungup) {
+          done();
+        } else {
+          if(toDial[index]) {
+            channel.emit('ChannelDtmfReceived', {digit: toDial[index],
+              channel: channel}, {channel: channel});
+            index += 1;
+          }
+          outboundBadExtension();
+        }
+      }, asyncDelay);
+    }
+  });
+
+  it('should test whether or not an additional station can join in a call' +
+     ' in progress', function(done) {
+    var client = getMockClient();
+
+    var channel = getMockChannel();
+    channel.name = 'SIP/phone1';
+    channel.caller = {'number': '1234'};
+    channel.outbound = true;
+
+    var secondChannel;
+    var config = 'tests/testConfigs/multipleEndpoints.json';
+
+    var sla = require('../lib/sla.js')(client, config, channel, '42')
+      .catch(errHandler)
+      .done();
+    var toDial =['1','0','0','#'];
+    var index = 0;
+
+    secondStationJoinsBridge();
+    setTimeout(function () {
+      secondChannel = getMockChannel();
+      secondChannel.name = 'SIP/phone2';
+      secondChannel.caller = {'number': '5678'};
+      secondChannel.outbound = true;
+      var sla2 = require('../lib/sla.js')(client, config, secondChannel, '42')
+      .catch(errHandler)
+      .done();
+    }, asyncDelay * 7);
+
+    function secondStationJoinsBridge() {
+      setTimeout(function() {
+        if (channels.length === 3 && bridgeChannels.length === 3 &&
+          channel.outbound && channel.wasAnswered && secondChannel.outbound &&
+          secondChannel.wasAnswered && dialed[0].wasAnswered &&
+          dialed[0].nonStation) {
+          done();
+        } else {
+          if(toDial[index]) {
+            channel.emit('ChannelDtmfReceived', {digit: toDial[index],
+              channel: channel}, {channel: channel});
+            index += 1;
+          }
+          secondStationJoinsBridge();
+        }
+      }, asyncDelay);
+    }
+  });
+
+  it('should test whether or not an additional inbound caller gets kicked out' +
+      ' when a call in progress', function(done) {
+    var client = getMockClient();
+    validEndpoints = ['SIP/phone1', 'SIP/phone2', 'SIP/phone3', 'SIP/phone4'];
+
+    var channel = getMockChannel();
+    channel.name = 'SIP/phone3';
+    channel.caller = {'number': '1234'};
+    channel.inbound = true;
+
+    var secondChannel = getMockChannel();
+    secondChannel.name = 'SIP/phone4';
+    secondChannel.caller = {'number': '5678'};
+    secondChannel.inbound = true;
+
+    var sla = require('../lib/sla.js')(client, config, channel, '42')
+      .catch(errHandler)
+      .done();
+
+    setTimeout(function () {
+      var sla2 = require('../lib/sla.js')(client, config, secondChannel, '42')
+      .catch(function (err) {
+        if (err.name === 'ExtensionOccupied') {
+          done();
+        }
+      })
+      .done();
+    }, asyncDelay * 2);
+  });
+
+  it('should test whether or not the application hangs up a non-station ' +
+      'channel when both station channels hang up', function(done) {
+    var client = getMockClient();
+    var channel = getMockChannel();
+    channel.name = 'SIP/phone1';
+    channel.caller = {'number': '1234'};
+    channel.outbound = true;
+
+    var secondChannel;
+    var config = 'tests/testConfigs/multipleEndpoints.json';
+
+    var sla = require('../lib/sla.js')(client, config, channel, '42')
+      .catch(errHandler)
+      .done();
+    var toDial =['1','0','0','#'];
+    var index = 0;
+    var hangupRequested = false;
+
+    bothStationsHangup();
+    setTimeout(function () {
+      secondChannel = getMockChannel();
+      secondChannel.name = 'SIP/phone2';
+      secondChannel.caller = {'number': '5678'};
+      secondChannel.outbound = true;
+      var sla2 = require('../lib/sla.js')(client, config, secondChannel, '42')
+      .catch(errHandler)
+      .done();
+    }, asyncDelay * 7);
+
+    function bothStationsHangup() {
+      setTimeout(function() {
+        if (channels.length === 0 && bridgeChannels.length === 0 &&
+          channel.outbound && channel.wasAnswered && channel.wasHungup &&
+          secondChannel.outbound && secondChannel.wasAnswered &&
+          secondChannel.wasHungup && dialed[0].wasAnswered &&
+          dialed[0].nonStation && dialed[0].wasHungup) {
+          done();
+        } else {
+
+          if(toDial[index]) {
+            channel.emit('ChannelDtmfReceived', {digit: toDial[index],
+              channel: channel}, {channel: channel});
+            index += 1;
+          }
+
+          if (secondChannel && channel && bridgeChannels.length === 3 &&
+            !hangupRequested) {
+              hangupRequested = true;
+            channel.hangup(function (){});
+            secondChannel.hangup(function (){});
+          }
+          bothStationsHangup();
         }
       }, asyncDelay);
     }
