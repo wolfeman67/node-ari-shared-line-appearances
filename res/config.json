@@ -4,12 +4,12 @@
       "42": {
         "timeout": "10",
         "trunks": [
-          "42-A"
+          "42-A",
+          "42-B"
         ],
         "stations": [
           "SIP/bobmarley",
-          "SIP/kingcrimson",
-          "SIP/chikinnugitz"
+          "SIP/kingcrimson"
         ]
       }
     },
@@ -19,7 +19,8 @@
           "42-A"
         ],
         "stations": [
-          "SIP/100@tcambron"
+          "SIP/bobmarley",
+          "SIP/kingcrimson"
         ]
       }
     }

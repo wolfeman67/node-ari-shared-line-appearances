@@ -27,7 +27,6 @@ function clientLoaded (client) {
     if (event.args[0] !== 'dialed') {
       var extension = event.args[0];
       sla(client, confFile, channel, extension)
-        .then(console.log)
         .catch(errHandler)
         .done();
     }
