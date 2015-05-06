@@ -61,4 +61,5 @@ exten => 43,1,NoOp()
     same => n,Hangup()
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The application is invoked using node app.js [configurationFilePathAndFileName]
+The application is invoked using node app.js [configurationPathAndFileName]
+The configurationPathAndFileName is relative to the dal.js, which is located inside of the lib/data directory.

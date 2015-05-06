@@ -1,3 +1,7 @@
+/**
+ * Sets up the test framework with grunt by adding jshint and mocha options.
+ * @param {Object} grunt - Grunt module for running tests.
+ */
 module.exports = function(grunt) {
   grunt.initConfig({
     jshint: {
